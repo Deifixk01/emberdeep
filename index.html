@@ -562,11 +562,11 @@ const CLASSES = {
   // melee
   warrior: { name: 'Warrior', tag: 'Steel and stubbornness', hp: 150, hpL: 15, mana: 50, manaL: 3, armor: 8, spd: 150, weapon: 'sword', abilities: ['cleave', 'warcry'], schools: ['blade', 'valor'], passive: 'Bulwark: takes 12% less damage.', color: '#d8553f', dr: 0.12 },
   berserker: { name: 'Berserker', tag: 'Bleeding only makes it angrier', hp: 140, hpL: 14, mana: 45, manaL: 3, armor: 5, spd: 154, weapon: 'axe', abilities: ['cleave', 'groundslam'], schools: ['blade', 'valor'], passive: 'Bloodrage: deals up to 40% more damage as health drops. Each kill restores 1.5% of maximum health.', color: '#e58a2e', rage: 0.4, killHeal: 0.015 },
-  spellblade: { name: 'Spellblade', tag: 'A sword in one hand, fire in the other', hp: 125, hpL: 12, mana: 80, manaL: 6, armor: 4, spd: 156, weapon: 'sword', abilities: ['cleave', 'firebolt'], schools: ['blade', 'fire'], passive: 'Spellweaving: casting a spell makes the next three basic attacks hit 50% harder. +40% spell power.', color: '#e86a9f', empower: 3, spPct: 0.4 },
+  spellblade: { name: 'Spellblade', tag: 'A sword in one hand, fire in the other', hp: 125, hpL: 12, mana: 80, manaL: 6, armor: 4, spd: 156, weapon: 'sword', abilities: ['cleave', 'firebolt'], schools: ['blade', 'fire'], passive: 'Spellweaving: casting a spell grants 3 Empower stacks. Each basic attack spends one to hit 50% harder; a Blade skill spends all of them for +30% damage per stack. +40% spell power.', color: '#e86a9f', empower: 3, empSkill: 0.3, spPct: 0.4 },
   // agile
   ranger: { name: 'Ranger', tag: 'Death from a distance', hp: 120, hpL: 12, mana: 60, manaL: 4, armor: 3, spd: 162, weapon: 'bow', abilities: ['multishot', 'trap'], schools: ['archery', 'guile'], passive: 'Keen Eye: +10% critical chance.', color: '#8fc04a', crit: 0.10 },
   warden: { name: 'Warden', tag: 'Cold arrows, colder patience', hp: 130, hpL: 13, mana: 70, manaL: 5, armor: 5, spd: 156, weapon: 'bow', abilities: ['powershot', 'frostnova'], schools: ['archery', 'frost'], passive: 'Frostbite: basic attacks chill, and critical hits freeze chilled enemies for a moment. +6% critical chance.', color: '#4fc9c0', chillShot: 1.5, shatter: 0.8, crit: 0.06 },
-  nightblade: { name: 'Nightblade', tag: 'Quick knives, borrowed souls', hp: 120, hpL: 12, mana: 70, manaL: 5, armor: 3, spd: 168, weapon: 'dagger', abilities: ['fanknives', 'soulbolt'], schools: ['guile', 'shadow'], passive: 'Opportunist: +30% critical damage, dash recharges 25% faster.', color: '#a070ff', critDmg: 0.3, dashCd: 0.75 },
+  nightblade: { name: 'Nightblade', tag: 'Quick knives, borrowed souls', hp: 120, hpL: 12, mana: 70, manaL: 5, armor: 3, spd: 168, weapon: 'dagger', abilities: ['fanknives', 'soulbolt'], schools: ['guile', 'shadow'], passive: 'Venom: basic attacks and skills add a Venom stack to enemies, up to 5, for 5s. Each stack deals 8% of your attack power per second, and your spells deal 10% more damage per stack. Dash recharges 25% faster.', color: '#a070ff', venom: { max: 5, dps: 0.08, spell: 0.10, dur: 5 }, dashCd: 0.75 },
   // casters
   sorcerer: { name: 'Sorcerer', tag: 'Fire, frost and little patience', hp: 105, hpL: 10, mana: 110, manaL: 8, armor: 1, spd: 152, weapon: 'staff', abilities: ['firebolt', 'frostnova'], schools: ['fire', 'frost'], passive: 'Attunement: +15% spell power, +40% mana regeneration.', color: '#5c9dff', spPct: 0.15, manaRegen: 0.4 },
   stormcaller: { name: 'Stormcaller', tag: 'Counts the seconds after the flash', hp: 105, hpL: 10, mana: 110, manaL: 8, armor: 1, spd: 152, weapon: 'staff', abilities: ['chainlightning', 'iceshard'], schools: ['storm', 'frost'], passive: 'Overload: stunned, chilled and frozen enemies take 20% more damage. +30% mana regeneration.', color: '#e6cf4a', overload: 0.2, manaRegen: 0.3 },
@@ -774,6 +774,11 @@ ab('barrage', 'Barrage', 'archery', 3, 10, 0, 'rain', 'Loose eighteen arrows in 
 ab('caltrops', 'Caltrops', 'guile', 1, 7, 0, 'trap', 'Scatter spikes around you for 5s: enemies crossing them are slowed, poisoned and take {28} damage twice a second.', c => { zone(P.x, P.y, 92, 5, 0.5, c.pow * 0.28, 'guile', { look: 'spikes', o: { poison: 0.4, chill: 1 } }); sfx('ui'); });
 ab('smokebomb', 'Smoke Bomb', 'guile', 2, 14, 0, 'cloud', 'Vanish in smoke: nearby enemies take {90} damage and are stunned, you cannot be hit for 2s, and you gain +30% critical chance for 4s.', c => { nova(P.x, P.y, 104, c.pow * 0.9, 'guile', { stun: 1.6 }); P.inv = Math.max(P.inv, 2); P.buff.step = 4; burst(P.x, P.y, '#9aa3b8', 30, 140); sfx('boom'); });
 ab('deathmark', 'Death Mark', 'guile', 3, 12, 0, 'skull', 'Mark the enemy nearest your aim: it takes 50% more damage from you for 8s. If it dies marked, it bursts for {260} poison damage.', c => { const e = nearestEnemy(c.tx, c.ty, 160, true) || P.target; if (!e || e.dead) { textFx(P.x, P.y - 26, 'No target', '#9aa3b8', 10); P.cd.deathmark = 0.5; return; } e.mark = 8; e.markDmg = c.pow * 2.6; ringFx(e.x, e.y, e.r + 14, TYPES.guile.color, 0.5); sfx('cast'); }, { tgt: 1, rng: 340 });
+// Guile: poison and daggers
+ab('viper', 'Viper Strike', 'guile', 1, 3, 0, 'dagger', 'Two quick stabs for {85} damage each that poison. Poisoned enemies take double. Strikes three times with daggers.', c => { const n = P.eq.weapon && P.eq.weapon.kind === 'dagger' ? 3 : 2; for (let i = 0; i < n; i++) after(i * 0.12, () => { if (!P.dead) { P.swing = 0.12; meleeArc(P.x, P.y, P.aim, 58, 1.7, c.pow * 0.85, 'guile', { poison: 0.35, vsPoison: 2, fxc: TYPES.guile.color }); sfx('slash'); } }); });
+ab('envenom', 'Envenom', 'guile', 1, 14, 0, 'potion', 'Coat your weapon for 8s: every basic attack and skill also poisons. With daggers you also attack 25% faster.', c => { P.buff.envenom = 8; ringFx(P.x, P.y, 44, TYPES.guile.color, 0.4); burst(P.x, P.y, TYPES.guile.color, 14, 90); sfx('cast'); });
+ab('rupture', 'Rupture', 'guile', 2, 6, 0, 'drain', 'A vicious cut for {150} damage that bursts the poison in every enemy near it, dealing all its remaining damage at once plus 50%. With daggers the cut reaches farther and hits twice.', c => { const dg = P.eq.weapon && P.eq.weapon.kind === 'dagger', rg = dg ? 84 : 64, hx = P.x + Math.cos(c.ang) * rg * 0.6, hy = P.y + Math.sin(c.ang) * rg * 0.6; meleeArc(P.x, P.y, c.ang, rg, 1.8, c.pow * 1.5, 'guile', { fxc: TYPES.guile.color, big: 1 }); if (dg) after(0.1, () => { if (!P.dead) meleeArc(P.x, P.y, c.ang, rg, 1.8, c.pow * 0.75, 'guile', { fxc: TYPES.guile.color }); }); after(dg ? 0.16 : 0.05, () => { let n = 0; for (const e of G.enemies) { if (e.dead || Math.hypot(e.x - hx, e.y - hy) > 110 + e.r) continue; const left = poisonLeft(e); if (left <= 0) continue; e.poison = null; e.venom = null; n++; burst(e.x, e.y, TYPES.guile.color, 14, 140); dmgEnemy(e, left * 1.5, 'guile', { raw: 1, proc: 1 }); } if (n) { ringFx(hx, hy, 110, TYPES.guile.color, 0.4); sfx('boom'); } }); sfx('slash'); });
+ab('contagion', 'Contagion', 'guile', 3, 10, 0, 'wisp', 'Infect an area for {130} damage, poisoning everything in it and doubling poison already there. Then every poison in the area leaps to all enemies close by. With daggers the area is larger.', c => { const r = P.eq.weapon && P.eq.weapon.kind === 'dagger' ? 140 : 110, src = []; ringFx(c.tx, c.ty, r, TYPES.guile.color, 0.5, true); burst(c.tx, c.ty, TYPES.guile.color, 22, 180); for (const e of G.enemies) { if (e.dead || Math.hypot(e.x - c.tx, e.y - c.ty) > r + e.r) continue; if (e.poison) e.poison = { dps: e.poison.dps * 2, t: 4 }; dmgEnemy(e, c.pow * 1.3, 'guile', { poison: 0.6 }); if (!e.dead && e.poison) src.push(e); } for (const s0 of src) for (const e of G.enemies) { if (e.dead || e === s0 || Math.hypot(e.x - s0.x, e.y - s0.y) > 130) continue; if (!e.poison || e.poison.dps < s0.poison.dps) { e.poison = { dps: s0.poison.dps, t: 4 }; boltFx(s0.x, s0.y, e.x, e.y, TYPES.guile.color); } if (s0.venom && (!e.venom || e.venom.n < s0.venom.n)) e.venom = { n: s0.venom.n, t: s0.venom.t }; if (!e.awake) wake(e); } sfx('cast'); }, { tgt: 1 });
 // Valor
 ab('shieldcharge', 'Shield Charge', 'valor', 1, 6, 0, 'valor', 'Charge forward, slamming enemies in your path for {160} damage and stunning them.', c => { const p = walkTo(P.x + Math.cos(c.ang) * 170, P.y + Math.sin(c.ang) * 170); lineHit(P.x, P.y, p.x, p.y, 30, c.pow * 1.6, 'valor', { stun: 1.1 }); P.trail.push({ x: P.x, y: P.y, t: 0.22 }); P.x = p.x; P.y = p.y; P.inv = Math.max(P.inv, 0.2); shake(5); sfx('boom'); }, { noEcho: 1 });
 ab('rally', 'Rallying Shout', 'valor', 2, 20, 0, 'cry', 'Restore 25% of your health and take 25% less damage for 6s.', c => { heal(P.maxHp * 0.25); P.buff.rally = 6; ringFx(P.x, P.y, 90, '#7fe08f', 0.5, true); sfx('heal'); });
@@ -1101,7 +1106,7 @@ function newPlayer(cls) {
   P = {
     cls, c, x: 0, y: 0, z: 0, r: 10, cr: 8, level: 1, xp: 0, pts: 0, mp: {}, mast: {}, tdmg: {}, ab: {}, slots: [null, null, null, null], cd: {}, cdMax: {},
     eq: {}, bag: [], gold: 0, tokens: 0, relics: { hp: 0, dmg: 0, mana: 0, flask: 0 }, bless: null, tokCost: {}, upCount: 0,
-    buff: { warcry: 0, ironskin: 0, step: 0, fury: 0, haste: 0, aegis: 0, rally: 0, avatar: 0, icearmor: 0 },
+    buff: { envenom: 0, warcry: 0, ironskin: 0, step: 0, fury: 0, haste: 0, aegis: 0, rally: 0, avatar: 0, icearmor: 0 },
     hp: 1, maxHp: 1, mana: 1, maxMana: 1, pot: 3, potMax: 3, potCd: 0, atkT: 0, swing: 0, dashT: 0, dashCd: 0, dashCdMax: 2.2, dashX: 1, dashY: 0,
     inv: 0, pinv: 0, hurt: 0, chill: 0, emp: 0, belt: 0, face: -Math.PI / 2, aim: 0, leg: {}, dead: false, moving: false, trail: [], zapT: 0, tgtT: 0, target: null,
     leap: null, spin: null, orbit: null, tempest: null, pullX: 0, pullY: 0, phoenixUsed: false, walk: 0,
@@ -1157,6 +1162,9 @@ function castSlot(i, man) {
   P.mana -= cost; P.cd[id] = abCd(id) * (free ? 0.5 : 1); P.cdMax[id] = P.cd[id];
   P.face = aim.ang; P.swing = 0.18;
   const c = { ang: aim.ang, tx: aim.tx, ty: aim.ty, pow: abPow(id), rank: abRank(id) };
+  if (P.c.empSkill && a.type === 'blade' && P.emp > 0) { // Spellblade: a Blade skill spends every Empower stack
+    c.pow *= 1 + P.c.empSkill * P.emp; textFx(P.x, P.y - 26, 'Empowered ×' + P.emp, '#ff7b2e', 10); P.emp = 0;
+  }
   a.cast(c);
   if (P.c.empower && TYPES[a.type].kind === 'spell') P.emp = P.c.empower; // Spellblade
   if (P.boons.echo && !a.noEcho && R() < 0.2) after(0.28, () => { if (!P.dead && !P.leap) { a.cast(c); textFx(P.x, P.y - 26, 'Echo', '#ffe14d', 10); } });
@@ -1178,7 +1186,7 @@ function usePotion() {
 }
 function basicAttack() {
   const w = P.eq.weapon, kind = w ? w.kind : 'sword', wk = WKIND[kind], ang = P.aim;
-  P.atkT = 1 / (wk.rate * P.aspd * (P.buff.haste > 0 ? 1.3 : 1) * (1 + 0.04 * P.mom)); P.swing = 0.16; P.face = ang;
+  P.atkT = 1 / (wk.rate * P.aspd * (P.buff.haste > 0 ? 1.3 : 1) * (1 + 0.04 * P.mom) * (P.buff.envenom > 0 && kind === 'dagger' ? 1.25 : 1)); P.swing = 0.16; P.face = ang;
   let m = 1; if (P.emp > 0) { P.emp--; m = 1.5; }                 // Spellblade: empowered swings
   const st = P.c.chillShot ? { chill: P.c.chillShot } : {};        // Warden: basic attacks chill
   if (wk.melee) {
@@ -1290,10 +1298,13 @@ const TYPE_TXT = { blade: '#ffd9d0', archery: '#e6f5c2', guile: '#b6f5e2', valor
 function typeMult(type) { return 1 + ((TYPES[type] && P.tdmg[type]) || 0); } // school damage now comes only from gear
 function rageBonus() { return P.c.rage ? P.c.rage * (1 - clamp(P.hp / P.maxHp, 0, 1)) : 0; } // Berserker
 function dmgNow() { return P.dmgMul * (P.buff.warcry > 0 ? 1.3 : 1) * (P.buff.fury > 0 ? 1.4 : 1) * (P.buff.avatar > 0 ? 1.4 : 1) * (1 + rageBonus()); }
+function poisonLeft(e) { // all the poison damage still to come on an enemy
+  return (e.poison ? e.poison.dps * e.poison.t : 0) + (e.venom && P.c.venom ? e.venom.n * P.atk * P.c.venom.dps * e.venom.t : 0);
+}
 function applySt(e, o, d) {
   const res = e.boss ? 0.3 : e.elite ? 0.7 : 1, fr = 1, dot = P.boons.malice ? 1.5 : 1, cc = P.boons.malice ? 1.3 : 1;
   if (o.burn) { const dps = d * o.burn / 3 * dot; if (!e.burn || e.burn.dps < dps) e.burn = { dps, t: 3 }; else e.burn.t = 3; }
-  if (o.poison) { const dps = d * o.poison / 4 * dot; e.poison = { dps: e.poison ? Math.min(e.poison.dps + dps, dps * 6) : dps, t: 4 }; }
+  if (o.poison) { const dps = d * o.poison / 4 * dot; e.poison = { dps: e.poison ? Math.max(e.poison.dps, Math.min(e.poison.dps + dps, dps * 6)) : dps, t: 4 }; /* stacks up to 6 doses, never weakens a stronger poison */ }
   if (o.chill) e.chill = Math.max(e.chill, o.chill * res * fr * cc);
   if (o.freeze) e.freeze = Math.max(e.freeze, o.freeze * res * fr * cc);
   if (o.stun) e.stun = Math.max(e.stun, o.stun * res * cc);
@@ -1312,6 +1323,12 @@ function dmgEnemy(e, amount, type, o) {
   if (P.c.overload && (e.stun > 0 || e.chill > 0 || e.freeze > 0)) d *= 1 + P.c.overload; // Stormcaller
   if (P.boons.exec && e.hp < e.maxHp * 0.3) d *= 1.4;
   if (P.boons.slayer && (e.boss || e.elite)) d *= 1.25;
+  if (o.vsPoison && (e.poison || e.venom)) d *= o.vsPoison;
+  const vn = P.c.venom;
+  if (vn && !o.dot && TYPES[type]) {
+    if (TYPES[type].kind === 'spell' && e.venom) d *= 1 + vn.spell * e.venom.n;                     // Nightblade: spells feed on venom
+    else if (TYPES[type].kind === 'skill' && !o.proc) { e.venom = { n: Math.min(vn.max, (e.venom ? e.venom.n : 0) + 1), t: vn.dur }; } // attacks and skills stack it
+  }
   e.hp -= d; e.flash = 0.1; if (!e.awake) wake(e);
   textFx(e.x, e.y - e.r - 4, fmt(Math.max(1, d)) + (crit ? '!' : ''), o.dot ? (o.col || '#ffb27a') : crit ? '#ffe14d' : (TYPE_TXT[type] || '#fff'), crit ? 15 : o.dot ? 9 : 11);
   if (!o.dot) {
@@ -1320,6 +1337,7 @@ function dmgEnemy(e, amount, type, o) {
       e.shT = G.time + 3; e.freeze = Math.max(e.freeze, P.c.shatter * (e.boss ? 0.3 : e.elite ? 0.7 : 1)); burst(e.x, e.y, TYPES.frost.color, 8, 90); sfx('ice');
     }
     applySt(e, o, d);
+    if (P.buff.envenom > 0 && !o.proc && TYPES[type] && TYPES[type].kind === 'skill') applySt(e, { poison: 0.35 }, d);
     if (P.boons.conduit && !o.proc && !o.raw) { // arc part of the hit to the nearest other enemy
       let nx = null, nd = 150 * 150;
       for (const q of G.enemies) { if (q.dead || q === e) continue; const dd = (q.x - e.x) ** 2 + (q.y - e.y) ** 2; if (dd < nd) { nd = dd; nx = q; } }
@@ -1750,12 +1768,13 @@ function updEnemies(dt) {
   for (let i = 0, n = es.length; i < n; i++) {
     const e = es[i]; if (e.dead) continue;
     if (e.flash > 0) e.flash -= dt; if (e.orbT > 0) e.orbT -= dt; if (e.curse > 0) e.curse -= dt; if (e.chill > 0) e.chill -= dt;
-    if (e.burn || e.poison || e.wither) {
+    if (e.burn || e.poison || e.wither || e.venom) {
       e.dotT += dt;
       if (e.dotT >= 0.5) {
         e.dotT -= 0.5;
         if (e.burn) { dmgEnemy(e, e.burn.dps * 0.5, 'fire', { dot: 1, raw: 1, col: '#ff9a4d' }); if (e.dead) continue; e.burn.t -= 0.5; if (e.burn.t <= 0) e.burn = null; }
         if (e.poison) { dmgEnemy(e, e.poison.dps * 0.5, 'guile', { dot: 1, raw: 1, col: '#7fe6b0' }); if (e.dead) continue; e.poison.t -= 0.5; if (e.poison.t <= 0) e.poison = null; }
+        if (e.venom) { dmgEnemy(e, e.venom.n * P.atk * P.c.venom.dps * 0.5 * (P.boons.malice ? 1.5 : 1), 'guile', { dot: 1, raw: 1, col: '#5fe0a0' }); if (e.dead) continue; e.venom.t -= 0.5; if (e.venom.t <= 0) e.venom = null; }
         if (e.wither) { dmgEnemy(e, e.wither.dps * 0.5, 'shadow', { dot: 1, raw: 1, col: '#c9a8ff' }); if (e.dead) continue; e.wither.t -= 0.5; if (e.wither.t <= 0) e.wither = null; }
       }
     }
@@ -2271,6 +2290,7 @@ function drawEnemy(c, e) {
     if (e.hp < e.maxHp) { const k = clamp(e.hp / e.maxHp, 0, 1); c.fillStyle = 'rgba(0,0,0,.6)'; c.fillRect(x - w / 2, top, w, 3.5); c.fillStyle = e.elite ? '#f2c75c' : '#e0463f'; c.fillRect(x - w / 2, top, w * k, 3.5); }
     let px = x - w / 2;
     if (e.burn) { c.fillStyle = '#ff7b2e'; c.fillRect(px, top + 4.5, 4, 2); px += 5; }
+    if (e.venom) { c.fillStyle = '#5fe0a0'; for (let k = 0; k < e.venom.n; k++) c.fillRect(px + k * 3, top + 4.5, 2, 3); px += e.venom.n * 3 + 2; }
     if (e.poison || e.wither) { c.fillStyle = e.poison ? '#3fd6ae' : '#a877ff'; c.fillRect(px, top + 4.5, 4, 2); px += 5; }
     if (e.chill > 0) { c.fillStyle = '#6fcbff'; c.fillRect(px, top + 4.5, 4, 2); }
   }
@@ -2483,7 +2503,7 @@ function setTxt(id, v) { if (hudC[id] !== v) { hudC[id] = v; $(id).textContent =
 function setVar(id, name, v) { const k = id + name; if (hudC[k] !== v) { hudC[k] = v; $(id).style.setProperty(name, v); } }
 function setCls(id, cls, on) { const k = id + '.' + cls; if (hudC[k] !== on) { hudC[k] = on; $(id).classList.toggle(cls, on); } }
 function setHidden(id, h) { const k = id + '#h'; if (hudC[k] !== h) { hudC[k] = h; $(id).hidden = h; } }
-const BUFFN = { rally: ['Rally', '#7fe08f'], avatar: ['Avatar', '#f2c75c'], icearmor: ['Ice Armor', '#6fcbff'], warcry: ['War Cry', '#d3dbee'], ironskin: ['Iron Skin', '#d3dbee'], step: ['Deadly', '#3fd6ae'], fury: ['Fury', '#ff6b5e'], haste: ['Haste', '#a4d15a'], aegis: ['Aegis', '#6fcbff'] };
+const BUFFN = { envenom: ['Envenom', '#3fd6ae'], rally: ['Rally', '#7fe08f'], avatar: ['Avatar', '#f2c75c'], icearmor: ['Ice Armor', '#6fcbff'], warcry: ['War Cry', '#d3dbee'], ironskin: ['Iron Skin', '#d3dbee'], step: ['Deadly', '#3fd6ae'], fury: ['Fury', '#ff6b5e'], haste: ['Haste', '#a4d15a'], aegis: ['Aegis', '#6fcbff'] };
 let hudSlow = 0;
 function updHud(dt) {
   if (!G || G.mode === 'title') return;
