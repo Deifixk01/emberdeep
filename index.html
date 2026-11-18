@@ -545,21 +545,32 @@ const TYPES = {
   shadow: { name: 'Shadow', kind: 'spell', color: '#a877ff', icon: 'shadow', perk: '+0.3% life steal, +2% mana', blurb: 'Curses, wisps and stolen life.' },
 };
 const TYPE_KEYS = Object.keys(TYPES);
-const MASTERY_DMG = 0.07, RANK_DMG = 0.15, UPM = 0.06, UPA = 0.03; // per mastery point, per ability rank, per temper step (base stats, bonuses)
+/* General masteries: every point, whichever mastery it goes to, gives MP_FLAT attack and spell power and MP_PCT more of both. */
+const MP_FLAT = 5, MP_PCT = 0.01;
+const MAST = {
+  might: { name: 'Might', icon: 'blade', color: '#ee5a4f', perk: '+2% damage', sfx: 'of Might' },
+  vitality: { name: 'Vitality', icon: 'heart', color: '#7fe08f', perk: '+3% maximum health', sfx: 'of the Bear' },
+  precision: { name: 'Precision', icon: 'star', color: '#ffe14d', perk: '+1% critical chance, +3% critical damage', sfx: 'of Precision' },
+  haste: { name: 'Haste', icon: 'dash', color: '#a4d15a', perk: '+1.5% attack speed, +1% move speed', sfx: 'of Haste' },
+  focus: { name: 'Focus', icon: 'orb', color: '#6fcbff', perk: '+1% cooldown recovery, +3% mana and mana regeneration', sfx: 'of Focus' },
+  fortune: { name: 'Fortune', icon: 'coin', color: '#f2c75c', perk: '+4% gold, +3% magic find, +2% experience', sfx: 'of Fortune' },
+};
+const MAST_KEYS = Object.keys(MAST);
+const RANK_DMG = 0.15, UPM = 0.06, UPA = 0.03; // per mastery point, per ability rank, per temper step (base stats, bonuses)
 
 const CLASSES = {
   // melee
-  warrior: { name: 'Warrior', tag: 'Steel and stubbornness', hp: 150, hpL: 15, mana: 50, manaL: 3, armor: 8, spd: 150, weapon: 'sword', abilities: ['cleave', 'warcry'], mast: { blade: 2, valor: 1 }, passive: 'Bulwark: takes 12% less damage.', color: '#d8553f', dr: 0.12 },
-  berserker: { name: 'Berserker', tag: 'Bleeding only makes it angrier', hp: 140, hpL: 14, mana: 45, manaL: 3, armor: 5, spd: 154, weapon: 'axe', abilities: ['cleave', 'groundslam'], mast: { blade: 2, valor: 1 }, passive: 'Bloodrage: deals up to 40% more damage as health drops. Each kill restores 1.5% of maximum health.', color: '#e58a2e', rage: 0.4, killHeal: 0.015 },
-  spellblade: { name: 'Spellblade', tag: 'A sword in one hand, fire in the other', hp: 125, hpL: 12, mana: 80, manaL: 6, armor: 4, spd: 156, weapon: 'sword', abilities: ['cleave', 'firebolt'], mast: { blade: 2, fire: 1 }, passive: 'Spellweaving: casting a spell makes the next three basic attacks hit 50% harder. +40% spell power.', color: '#e86a9f', empower: 3, spPct: 0.4 },
+  warrior: { name: 'Warrior', tag: 'Steel and stubbornness', hp: 150, hpL: 15, mana: 50, manaL: 3, armor: 8, spd: 150, weapon: 'sword', abilities: ['cleave', 'warcry'], schools: ['blade', 'valor'], passive: 'Bulwark: takes 12% less damage.', color: '#d8553f', dr: 0.12 },
+  berserker: { name: 'Berserker', tag: 'Bleeding only makes it angrier', hp: 140, hpL: 14, mana: 45, manaL: 3, armor: 5, spd: 154, weapon: 'axe', abilities: ['cleave', 'groundslam'], schools: ['blade', 'valor'], passive: 'Bloodrage: deals up to 40% more damage as health drops. Each kill restores 1.5% of maximum health.', color: '#e58a2e', rage: 0.4, killHeal: 0.015 },
+  spellblade: { name: 'Spellblade', tag: 'A sword in one hand, fire in the other', hp: 125, hpL: 12, mana: 80, manaL: 6, armor: 4, spd: 156, weapon: 'sword', abilities: ['cleave', 'firebolt'], schools: ['blade', 'fire'], passive: 'Spellweaving: casting a spell makes the next three basic attacks hit 50% harder. +40% spell power.', color: '#e86a9f', empower: 3, spPct: 0.4 },
   // agile
-  ranger: { name: 'Ranger', tag: 'Death from a distance', hp: 120, hpL: 12, mana: 60, manaL: 4, armor: 3, spd: 162, weapon: 'bow', abilities: ['multishot', 'trap'], mast: { archery: 2, guile: 1 }, passive: 'Keen Eye: +10% critical chance.', color: '#8fc04a', crit: 0.10 },
-  warden: { name: 'Warden', tag: 'Cold arrows, colder patience', hp: 130, hpL: 13, mana: 70, manaL: 5, armor: 5, spd: 156, weapon: 'bow', abilities: ['powershot', 'frostnova'], mast: { archery: 2, frost: 1 }, passive: 'Frostbite: basic attacks chill, and critical hits freeze chilled enemies for a moment. +6% critical chance.', color: '#4fc9c0', chillShot: 1.5, shatter: 0.8, crit: 0.06 },
-  nightblade: { name: 'Nightblade', tag: 'Quick knives, borrowed souls', hp: 120, hpL: 12, mana: 70, manaL: 5, armor: 3, spd: 168, weapon: 'dagger', abilities: ['fanknives', 'soulbolt'], mast: { guile: 2, shadow: 1 }, passive: 'Opportunist: +30% critical damage, dash recharges 25% faster.', color: '#a070ff', critDmg: 0.3, dashCd: 0.75 },
+  ranger: { name: 'Ranger', tag: 'Death from a distance', hp: 120, hpL: 12, mana: 60, manaL: 4, armor: 3, spd: 162, weapon: 'bow', abilities: ['multishot', 'trap'], schools: ['archery', 'guile'], passive: 'Keen Eye: +10% critical chance.', color: '#8fc04a', crit: 0.10 },
+  warden: { name: 'Warden', tag: 'Cold arrows, colder patience', hp: 130, hpL: 13, mana: 70, manaL: 5, armor: 5, spd: 156, weapon: 'bow', abilities: ['powershot', 'frostnova'], schools: ['archery', 'frost'], passive: 'Frostbite: basic attacks chill, and critical hits freeze chilled enemies for a moment. +6% critical chance.', color: '#4fc9c0', chillShot: 1.5, shatter: 0.8, crit: 0.06 },
+  nightblade: { name: 'Nightblade', tag: 'Quick knives, borrowed souls', hp: 120, hpL: 12, mana: 70, manaL: 5, armor: 3, spd: 168, weapon: 'dagger', abilities: ['fanknives', 'soulbolt'], schools: ['guile', 'shadow'], passive: 'Opportunist: +30% critical damage, dash recharges 25% faster.', color: '#a070ff', critDmg: 0.3, dashCd: 0.75 },
   // casters
-  sorcerer: { name: 'Sorcerer', tag: 'Fire, frost and little patience', hp: 105, hpL: 10, mana: 110, manaL: 8, armor: 1, spd: 152, weapon: 'staff', abilities: ['firebolt', 'frostnova'], mast: { fire: 2, frost: 1 }, passive: 'Attunement: +15% spell power, +40% mana regeneration.', color: '#5c9dff', spPct: 0.15, manaRegen: 0.4 },
-  stormcaller: { name: 'Stormcaller', tag: 'Counts the seconds after the flash', hp: 105, hpL: 10, mana: 110, manaL: 8, armor: 1, spd: 152, weapon: 'staff', abilities: ['chainlightning', 'iceshard'], mast: { storm: 2, frost: 1 }, passive: 'Overload: stunned, chilled and frozen enemies take 20% more damage. +30% mana regeneration.', color: '#e6cf4a', overload: 0.2, manaRegen: 0.3 },
-  warlock: { name: 'Warlock', tag: 'Every curse is an investment', hp: 105, hpL: 10, mana: 105, manaL: 8, armor: 1, spd: 150, weapon: 'staff', abilities: ['hex', 'fireball'], mast: { shadow: 2, fire: 1 }, passive: 'Soul Harvest: enemies that die burning, cursed or withering restore 6% of your mana.', color: '#cf62e6', harvest: 0.06 },
+  sorcerer: { name: 'Sorcerer', tag: 'Fire, frost and little patience', hp: 105, hpL: 10, mana: 110, manaL: 8, armor: 1, spd: 152, weapon: 'staff', abilities: ['firebolt', 'frostnova'], schools: ['fire', 'frost'], passive: 'Attunement: +15% spell power, +40% mana regeneration.', color: '#5c9dff', spPct: 0.15, manaRegen: 0.4 },
+  stormcaller: { name: 'Stormcaller', tag: 'Counts the seconds after the flash', hp: 105, hpL: 10, mana: 110, manaL: 8, armor: 1, spd: 152, weapon: 'staff', abilities: ['chainlightning', 'iceshard'], schools: ['storm', 'frost'], passive: 'Overload: stunned, chilled and frozen enemies take 20% more damage. +30% mana regeneration.', color: '#e6cf4a', overload: 0.2, manaRegen: 0.3 },
+  warlock: { name: 'Warlock', tag: 'Every curse is an investment', hp: 105, hpL: 10, mana: 105, manaL: 8, armor: 1, spd: 150, weapon: 'staff', abilities: ['hex', 'fireball'], schools: ['shadow', 'fire'], passive: 'Soul Harvest: enemies that die burning, cursed or withering restore 6% of your mana.', color: '#cf62e6', harvest: 0.06 },
 };
 
 const WKIND = {
@@ -581,7 +592,12 @@ const RAR_MUL = [1, 1.08, 1.18, 1.3, 1.45];
 const ipow = l => Math.pow(1.10, l - 1) * Math.pow(1.15, tierOf(l));
 const dpow = l => Math.pow(1.07, l - 1) * Math.pow(1.08, tierOf(l));
 const gpow = l => Math.pow(1.07, l - 1);
-function escale(f) { const t = tierOf(f); return { hp: Math.pow(1.17, f - 1) * Math.pow(1.35, t), dmg: Math.pow(1.10, f - 1) * Math.pow(1.15, t), xp: Math.pow(1.10, f - 1) }; }
+// The general masteries' flat +5 per point makes players much stronger than the old school masteries did,
+// so enemies get an extra multiplier that ramps in over the first ten floors.
+function escale(f) {
+  const t = tierOf(f), hr = 1 + Math.min(1.3, 0.13 * (f - 1)), dr = 1 + Math.min(0.4, 0.04 * (f - 1));
+  return { hp: Math.pow(1.17, f - 1) * Math.pow(1.35, t) * hr, dmg: Math.pow(1.10, f - 1) * Math.pow(1.15, t) * dr, xp: Math.pow(1.10, f - 1) };
+}
 const xpNeed = L => Math.floor(40 * Math.pow(L, 1.45) * Math.pow(1.05, L));
 
 const ALLS = SLOTS;
@@ -605,7 +621,7 @@ const AFF = {
   mf: { w: 4, slots: ['ring', 'amulet', 'helm'], min: .08, max: .18, f: v => '+' + pc(v) + ' magic find', sfx: 'of Fortune' },
   xp: { w: 3, slots: ['ring', 'amulet', 'helm'], min: .05, max: .10, f: v => '+' + pc(v) + ' experience', sfx: 'of Learning' },
   tdmg: { w: 13, slots: ALLS, min: .08, max: .16, typed: true, f: (v, t) => '+' + pc(v) + ' ' + TYPES[t].name + ' damage' },
-  mast: { w: 4, slots: ALLS, min: 1, max: 1, typed: true, minRar: 2, f: (v, t) => '+' + v + ' ' + TYPES[t].name + ' mastery' },
+  mast: { w: 4, slots: ALLS, min: 1, max: 1, mtyped: true, minRar: 2, f: (v, t) => '+' + v + ' ' + MAST[t].name + ' mastery' },
 };
 const TYPE_SFX = { blade: 'of the Duelist', archery: 'of the Hawk', guile: 'of the Viper', valor: 'of the Vanguard', fire: 'of Embers', frost: 'of Winter', storm: 'of Thunder', shadow: 'of Dusk' };
 
@@ -735,7 +751,7 @@ ab('frostnova', 'Frost Nova', 'frost', 1, 9, 20, 'fnova', 'Freeze nearby enemies
 ab('blizzard', 'Blizzard', 'frost', 2, 10, 30, 'blizz', 'A storm of ice rages for 4s, dealing {60} damage ten times and chilling.', c => { zone(c.tx, c.ty, 104, 4, 0.4, c.pow * 0.6, 'frost', { look: 'snow', o: { chill: 1.5 } }); sfx('ice'); }, { tgt: 1 });
 ab('glacialspike', 'Glacial Spike', 'frost', 3, 7, 28, 'spike', 'A huge piercing lance for {420} damage that freezes everything in its path.', c => { shoot(P.x, P.y, c.ang, 640, c.pow * 4.2, 'frost', { pierce: 99, r: 9, o: { freeze: 1.2 }, look: 'shard', len: 24 }); sfx('ice'); });
 // Storm
-ab('chainlightning', 'Chain Lightning', 'storm', 1, 1.6, 12, 'chain', 'Lightning arcs between up to 5 enemies for {120} damage each.', c => { chainBolt(c, c.pow * 1.2, 4 + Math.floor(P.mast.storm / 6)); sfx('zap'); });
+ab('chainlightning', 'Chain Lightning', 'storm', 1, 1.6, 12, 'chain', 'Lightning arcs between up to 5 enemies for {120} damage each. Every 3 ranks add a jump.', c => { chainBolt(c, c.pow * 1.2, 4 + Math.floor((c.rank - 1) / 3)); sfx('zap'); });
 ab('thunderstrike', 'Thunderstrike', 'storm', 2, 4, 20, 'thunder', 'A bolt from above deals {300} damage in a small area and stuns.', c => { strike(c.tx, c.ty, 62, c.pow * 3, { stun: 1 }); }, { tgt: 1 });
 ab('stormorb', 'Storm Orb', 'storm', 2, 9, 26, 'orb', 'A drifting orb shocks enemies near it for {55} damage three times a second for 5s.', c => { shoot(P.x, P.y, c.ang, 95, c.pow * 0.55, 'storm', { life: 5, r: 10, orb: 1, tt: 0, look: 'storm' }); sfx('zap'); });
 ab('tempest', 'Tempest', 'storm', 3, 16, 40, 'tempest', 'For 6s, lightning strikes a nearby enemy four times a second for {110} damage.', c => { P.tempest = { t: 6, tt: 0, dmg: c.pow * 1.1 }; sfx('boss'); });
@@ -744,6 +760,40 @@ ab('soulbolt', 'Drain Bolt', 'shadow', 1, 1.1, 10, 'drain', 'A bolt for {150} da
 ab('hex', 'Withering Hex', 'shadow', 1, 10, 18, 'hex', 'Curse an area: enemies take 35% more damage for 8s and wither for {160} damage over 4s.', c => { hexAt(c.tx, c.ty, 106, c.pow * 1.6); sfx('cast'); }, { tgt: 1 });
 ab('wisps', 'Soul Wisps', 'shadow', 2, 6, 22, 'wisp', 'Release four seeking wisps for {110} damage each.', c => { for (let i = 0; i < 4; i++) shoot(P.x, P.y, c.ang + (i - 1.5) * 0.7, 300, c.pow * 1.1, 'shadow', { home: 7, life: 3.2, look: 'wisp', r: 5 }); sfx('cast'); });
 ab('voidrift', 'Void Rift', 'shadow', 3, 15, 40, 'rift', 'Tear a rift that drags enemies in for 4s, dealing {70} damage ten times, then collapses for {200}.', c => { const d = c.pow; zone(c.tx, c.ty, 124, 4, 0.4, d * 0.7, 'shadow', { look: 'rift', pull: 150, end: z => { nova(z.x, z.y, 124, d * 2, 'shadow', { nolos: 1 }); shake(8); sfx('boom'); } }); sfx('boss'); }, { tgt: 1 });
+
+/* ---------- Expanded schools: three more abilities each ---------- */
+// Blade
+ab('lunge', 'Lunge', 'blade', 1, 4, 0, 'step', 'Dart forward, cutting every enemy in your path for {150} damage.', c => { const p = walkTo(P.x + Math.cos(c.ang) * 150, P.y + Math.sin(c.ang) * 150); lineHit(P.x, P.y, p.x, p.y, 26, c.pow * 1.5, 'blade', {}); P.trail.push({ x: P.x, y: P.y, t: 0.22 }); P.x = p.x; P.y = p.y; P.inv = Math.max(P.inv, 0.15); sfx('slash'); }, { noEcho: 1 });
+ab('flurry', 'Blade Flurry', 'blade', 2, 6, 0, 'cleave', 'Five rapid slashes in front of you, {65} damage each.', c => { for (let i = 0; i < 5; i++) after(i * 0.11, () => { if (!P.dead) { P.swing = 0.12; meleeArc(P.x, P.y, P.aim, 66, 2.2, c.pow * 0.65, 'blade', {}); sfx('slash'); } }); });
+ab('crescent', 'Crimson Crescent', 'blade', 3, 9, 0, 'cleave', 'Hurl a crescent of force that cuts through everything for {320} damage and leaves enemies bleeding.', c => { shoot(P.x, P.y, c.ang, 430, c.pow * 3.2, 'blade', { pierce: 99, r: 16, life: 0.9, look: 'wave', o: { poison: 0.6 } }); shake(4); sfx('slash'); });
+// Archery
+ab('pinshot', 'Pinning Shot', 'archery', 1, 5, 0, 'arrow', 'An arrow for {180} damage that pierces two enemies and stuns them.', c => { shoot(P.x, P.y, c.ang, 700, c.pow * 1.8, 'archery', { pierce: 2, look: 'arrow', len: 16, o: { stun: 1.4 } }); sfx('shoot'); });
+ab('explosive', 'Explosive Arrow', 'archery', 2, 5, 0, 'fireball', 'An arrow that bursts for {230} damage in an area and sets enemies burning.', c => { shoot(P.x, P.y, c.ang, 560, c.pow * 2.3, 'archery', { aoe: 70, look: 'arrow', len: 14, o: { burn: 0.4 } }); sfx('shoot'); });
+ab('barrage', 'Barrage', 'archery', 3, 10, 0, 'rain', 'Loose eighteen arrows in a narrow stream, {75} damage each.', c => { for (let i = 0; i < 18; i++) after(i * 0.065, () => { if (!P.dead) { shoot(P.x, P.y, P.aim + rnd(-0.09, 0.09), 680, c.pow * 0.75, 'archery', { look: 'arrow' }); sfx('shoot'); } }); });
+// Guile
+ab('caltrops', 'Caltrops', 'guile', 1, 7, 0, 'trap', 'Scatter spikes around you for 5s: enemies crossing them are slowed, poisoned and take {28} damage twice a second.', c => { zone(P.x, P.y, 92, 5, 0.5, c.pow * 0.28, 'guile', { look: 'spikes', o: { poison: 0.4, chill: 1 } }); sfx('ui'); });
+ab('smokebomb', 'Smoke Bomb', 'guile', 2, 14, 0, 'cloud', 'Vanish in smoke: nearby enemies take {90} damage and are stunned, you cannot be hit for 2s, and you gain +30% critical chance for 4s.', c => { nova(P.x, P.y, 104, c.pow * 0.9, 'guile', { stun: 1.6 }); P.inv = Math.max(P.inv, 2); P.buff.step = 4; burst(P.x, P.y, '#9aa3b8', 30, 140); sfx('boom'); });
+ab('deathmark', 'Death Mark', 'guile', 3, 12, 0, 'skull', 'Mark the enemy nearest your aim: it takes 50% more damage from you for 8s. If it dies marked, it bursts for {260} poison damage.', c => { const e = nearestEnemy(c.tx, c.ty, 160, true) || P.target; if (!e || e.dead) { textFx(P.x, P.y - 26, 'No target', '#9aa3b8', 10); P.cd.deathmark = 0.5; return; } e.mark = 8; e.markDmg = c.pow * 2.6; ringFx(e.x, e.y, e.r + 14, TYPES.guile.color, 0.5); sfx('cast'); }, { tgt: 1, rng: 340 });
+// Valor
+ab('shieldcharge', 'Shield Charge', 'valor', 1, 6, 0, 'valor', 'Charge forward, slamming enemies in your path for {160} damage and stunning them.', c => { const p = walkTo(P.x + Math.cos(c.ang) * 170, P.y + Math.sin(c.ang) * 170); lineHit(P.x, P.y, p.x, p.y, 30, c.pow * 1.6, 'valor', { stun: 1.1 }); P.trail.push({ x: P.x, y: P.y, t: 0.22 }); P.x = p.x; P.y = p.y; P.inv = Math.max(P.inv, 0.2); shake(5); sfx('boom'); }, { noEcho: 1 });
+ab('rally', 'Rallying Shout', 'valor', 2, 20, 0, 'cry', 'Restore 25% of your health and take 25% less damage for 6s.', c => { heal(P.maxHp * 0.25); P.buff.rally = 6; ringFx(P.x, P.y, 90, '#7fe08f', 0.5, true); sfx('heal'); });
+ab('avatar', 'Avatar of War', 'valor', 3, 30, 0, 'iron', 'For 8s, deal 40% more damage and take 30% less.', c => { P.buff.avatar = 8; ringFx(P.x, P.y, 130, '#f2c75c', 0.7, true); shake(6); sfx('boss'); });
+// Fire
+ab('flamebreath', 'Flame Breath', 'fire', 1, 3.5, 14, 'fire', 'Breathe a cone of fire for {150} damage that sets enemies burning.', c => { meleeArc(P.x, P.y, c.ang, 120, 1.3, c.pow * 1.5, 'fire', { burn: 0.6, big: 1 }); burst(P.x + Math.cos(c.ang) * 50, P.y + Math.sin(c.ang) * 50, TYPES.fire.color, 16, 160); sfx('cast'); });
+ab('livingbomb', 'Living Bomb', 'fire', 2, 5, 20, 'fireball', 'Plant a bomb on the enemy nearest your aim. After 2.5s it explodes for {320} damage around it.', c => { const e = nearestEnemy(c.tx, c.ty, 160, true) || P.target; if (!e || e.dead) { textFx(P.x, P.y - 26, 'No target', '#9aa3b8', 10); P.cd.livingbomb = 0.5; P.mana += 20; return; } const d = c.pow * 3.2; e.bombT = 2.5; ringFx(e.x, e.y, e.r + 10, TYPES.fire.color, 0.4); after(2.5, () => { e.bombT = 0; nova(e.x, e.y, 84, d, 'fire', { burn: 0.4, nolos: 1 }); shake(5); sfx('boom'); }); sfx('cast'); }, { tgt: 1, rng: 340 });
+ab('firestorm', 'Firestorm', 'fire', 3, 14, 45, 'meteor', 'Eight fireballs rain down around a spot over 2s, each exploding for {190} damage.', c => { const x = c.tx, y = c.ty, d = c.pow * 1.9; for (let i = 0; i < 8; i++) after(i * 0.25, () => { const a = rnd(0, TAU), r = rnd(0, 90), fx = x + Math.cos(a) * r, fy = y + Math.sin(a) * r; G.fx.push({ k: 'mark', x: fx, y: fy, r: 58, t: 0, dur: 0.35, color: TYPES.fire.color }); after(0.35, () => { nova(fx, fy, 58, d, 'fire', { burn: 0.3, nolos: 1 }); shake(3); sfx('boom'); }); }); sfx('cast'); }, { tgt: 1 });
+// Frost
+ab('icearmor', 'Ice Armor', 'frost', 1, 16, 20, 'frost', 'For 8s, take 25% less damage and freeze enemies that hit you in melee.', c => { P.buff.icearmor = 8; ringFx(P.x, P.y, 40, TYPES.frost.color, 0.4); sfx('ice'); });
+ab('frozenorb', 'Frozen Orb', 'frost', 2, 7, 26, 'orb', 'A slow orb that sprays shards in every direction for 3s, {55} damage per shard, chilling everything.', c => { shoot(P.x, P.y, c.ang, 120, c.pow * 0.55, 'frost', { life: 3, r: 10, orb: 1, spray: 1, tt: 0, look: 'frost' }); sfx('ice'); });
+ab('absolutezero', 'Absolute Zero', 'frost', 3, 16, 45, 'fnova', 'After a moment, everything near you is frozen solid for 2.5s and takes {450} damage.', c => { G.fx.push({ k: 'mark', x: P.x, y: P.y, r: 160, t: 0, dur: 0.7, color: TYPES.frost.color }); after(0.7, () => { nova(P.x, P.y, 160, c.pow * 4.5, 'frost', { freeze: 2.5, chill: 4 }); shake(8); sfx('ice'); }); sfx('cast'); });
+// Storm
+ab('spark', 'Spark', 'storm', 1, 0.6, 6, 'storm', 'Three crackling sparks that seek enemies for {65} damage each.', c => { for (let i = -1; i <= 1; i++) shoot(P.x, P.y, c.ang + i * 0.35 + rnd(-0.1, 0.1), 360, c.pow * 0.65, 'storm', { home: 5, life: 1.1, look: 'storm', r: 5 }); sfx('zap'); });
+ab('staticfield', 'Static Field', 'storm', 2, 8, 18, 'thunder', 'Shock every enemy near you for 20% of its current health, up to {400}. Bosses take a quarter of that.', c => { ringFx(P.x, P.y, 170, TYPES.storm.color, 0.4, true); for (const e of G.enemies) { if (e.dead || Math.hypot(e.x - P.x, e.y - P.y) > 170 + e.r || !(e.ghost || los(P.x, P.y, e.x, e.y))) continue; boltFx(P.x, P.y, e.x, e.y, TYPES.storm.color); dmgEnemy(e, Math.min(e.hp * 0.2 * (e.boss ? 0.25 : 1), c.pow * 4), 'storm', { raw: 1 }); } sfx('zap'); });
+ab('balllightning', 'Ball Lightning', 'storm', 3, 12, 40, 'orb', 'Hurl five balls of lightning that tear through enemies for {170} damage each and stun them.', c => { for (let i = -2; i <= 2; i++) shoot(P.x, P.y, c.ang + i * 0.2, 300, c.pow * 1.7, 'storm', { pierce: 99, r: 9, life: 1.6, look: 'storm', o: { stun: 0.5 } }); sfx('zap'); });
+// Shadow
+ab('siphon', 'Siphon Life', 'shadow', 1, 6, 15, 'drain', 'Drain up to four nearby enemies for {95} damage each and heal for half of it.', c => { let n = 0; for (const e of G.enemies.slice().sort((a, b) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(b.x - P.x, b.y - P.y))) { if (n >= 4) break; if (e.dead || Math.hypot(e.x - P.x, e.y - P.y) > 200 || !los(P.x, P.y, e.x, e.y)) continue; n++; boltFx(e.x, e.y, P.x, P.y, TYPES.shadow.color); heal(dmgEnemy(e, c.pow * 0.95, 'shadow', {}) * 0.5); } if (!n) textFx(P.x, P.y - 26, 'No target', '#9aa3b8', 10); sfx('cast'); });
+ab('nightmare', 'Nightmare', 'shadow', 2, 12, 28, 'hex', 'Terrify enemies in an area: they flee for 3s and wither for {180} damage over 4s. Bosses are not afraid.', c => { hexAt(c.tx, c.ty, 110, c.pow * 1.8, true); for (const e of G.enemies) if (!e.dead && !e.boss && Math.hypot(e.x - c.tx, e.y - c.ty) < 110 + e.r) e.fear = 3; sfx('cast'); }, { tgt: 1 });
+ab('reap', 'Soul Reap', 'shadow', 3, 14, 40, 'rift', 'A great scythe sweeps around you for {350} damage. Each enemy it hits restores 3% of your health.', c => { slashFx(P.x, P.y, P.aim, 130, TAU, TYPES.shadow.color); let n = 0; for (const e of G.enemies) { if (e.dead || Math.hypot(e.x - P.x, e.y - P.y) > 130 + e.r || !(e.ghost || los(P.x, P.y, e.x, e.y))) continue; dmgEnemy(e, c.pow * 3.5, 'shadow', {}); n++; } heal(P.maxHp * 0.03 * n); shake(6); sfx('boom'); });
 
 const AB_BY_TYPE = {};
 for (const k of TYPE_KEYS) AB_BY_TYPE[k] = Object.values(AB).filter(a => a.type === k).sort((a, b) => a.tier - b.tier);
@@ -1051,14 +1101,14 @@ function newPlayer(cls) {
   P = {
     cls, c, x: 0, y: 0, z: 0, r: 10, cr: 8, level: 1, xp: 0, pts: 0, mp: {}, mast: {}, tdmg: {}, ab: {}, slots: [null, null, null, null], cd: {}, cdMax: {},
     eq: {}, bag: [], gold: 0, tokens: 0, relics: { hp: 0, dmg: 0, mana: 0, flask: 0 }, bless: null, tokCost: {}, upCount: 0,
-    buff: { warcry: 0, ironskin: 0, step: 0, fury: 0, haste: 0, aegis: 0 },
+    buff: { warcry: 0, ironskin: 0, step: 0, fury: 0, haste: 0, aegis: 0, rally: 0, avatar: 0, icearmor: 0 },
     hp: 1, maxHp: 1, mana: 1, maxMana: 1, pot: 3, potMax: 3, potCd: 0, atkT: 0, swing: 0, dashT: 0, dashCd: 0, dashCdMax: 2.2, dashX: 1, dashY: 0,
     inv: 0, pinv: 0, hurt: 0, chill: 0, emp: 0, belt: 0, face: -Math.PI / 2, aim: 0, leg: {}, dead: false, moving: false, trail: [], zapT: 0, tgtT: 0, target: null,
     leap: null, spin: null, orbit: null, tempest: null, pullX: 0, pullY: 0, phoenixUsed: false, walk: 0,
     boons: {}, windUsed: false, dashN: 1, dashMax: 1, mom: 0, momT: 0, retT: 0,
     atk: 10, sp: 10, armor: 0, crit: 0.05, critDmg: 1.5, aspd: 1, spd: 150, dodge: 0, leech: 0, cdr: 0, hpRegen: 0, manaRegen: 1, dmgMul: 1, drFlat: 0, goldFind: 0, mf: 0, xpB: 0,
   };
-  for (const k of TYPE_KEYS) { P.mp[k] = c.mast[k] || 0; P.mast[k] = P.mp[k]; }
+  for (const k of MAST_KEYS) { P.mp[k] = 0; P.mast[k] = 0; }
   c.abilities.forEach((id, i) => { P.ab[id] = { rank: 1 }; P.slots[i] = id; });
   P.eq.weapon = mkItem(1, { slot: 'weapon', kind: c.weapon, rar: 0 });
   P.eq.chest = mkItem(1, { slot: 'chest', rar: 0 });
@@ -1213,7 +1263,7 @@ function hurtPlayer(dmg, src, o) {
   if (P.dead || P.inv > 0 || G.sanct) return false;
   if (R() < P.dodge) { textFx(P.x, P.y - 20, 'Dodge', '#cfeee0', 10); return false; }
   let dr = P.armor / (P.armor + G.armorK);
-  dr = 1 - (1 - dr) * (1 - P.drFlat) * (P.buff.ironskin > 0 ? 0.4 : 1) * (P.buff.aegis > 0 ? 0.5 : 1);
+  dr = 1 - (1 - dr) * (1 - P.drFlat) * (P.buff.ironskin > 0 ? 0.4 : 1) * (P.buff.aegis > 0 ? 0.5 : 1) * (P.buff.rally > 0 ? 0.75 : 1) * (P.buff.avatar > 0 ? 0.7 : 1) * (P.buff.icearmor > 0 ? 0.75 : 1);
   dr = Math.min(dr, 0.88);
   const d = dmg * (1 - dr) * rnd(0.9, 1.1);
   P.hp -= d; P.hurt = 0.3; shake(4); textFx(P.x, P.y - 20, '-' + fmt(Math.max(1, d)), '#ff6b5e', 12); sfx('hurt');
@@ -1222,6 +1272,7 @@ function hurtPlayer(dmg, src, o) {
   if (src && o.melee && !src.dead) {
     if (P.leg.thorns) dmgEnemy(src, P.atk * 1.5 + P.sp * 0.6, 'valor', { proc: 1 });
     if (P.buff.ironskin > 0 && !src.dead) dmgEnemy(src, P.atk, 'valor', { proc: 1 });
+    if (P.buff.icearmor > 0 && !src.dead) { src.chill = Math.max(src.chill, 2); src.freeze = Math.max(src.freeze, src.boss ? 0.3 : 1); }
   }
   if (P.hp <= 0) {
     if (P.leg.phoenix && !P.phoenixUsed) {
@@ -1236,16 +1287,12 @@ function hurtPlayer(dmg, src, o) {
 
 /* ===================== DAMAGE PRIMITIVES (player -> enemies) ===================== */
 const TYPE_TXT = { blade: '#ffd9d0', archery: '#e6f5c2', guile: '#b6f5e2', valor: '#f1f4fb', fire: '#ffb27a', frost: '#bfe9ff', storm: '#fff3a6', shadow: '#d4bcff', arcane: '#e3d6ff' };
-function typeMult(type) {
-  if (type === 'arcane') return 1 + MASTERY_DMG * 0.5 * Math.max(P.mast.fire, P.mast.frost, P.mast.storm, P.mast.shadow);
-  if (!TYPES[type]) return 1;
-  return 1 + MASTERY_DMG * P.mast[type] + (P.tdmg[type] || 0);
-}
+function typeMult(type) { return 1 + ((TYPES[type] && P.tdmg[type]) || 0); } // school damage now comes only from gear
 function rageBonus() { return P.c.rage ? P.c.rage * (1 - clamp(P.hp / P.maxHp, 0, 1)) : 0; } // Berserker
-function dmgNow() { return P.dmgMul * (P.buff.warcry > 0 ? 1.3 : 1) * (P.buff.fury > 0 ? 1.4 : 1) * (1 + rageBonus()); }
+function dmgNow() { return P.dmgMul * (P.buff.warcry > 0 ? 1.3 : 1) * (P.buff.fury > 0 ? 1.4 : 1) * (P.buff.avatar > 0 ? 1.4 : 1) * (1 + rageBonus()); }
 function applySt(e, o, d) {
-  const res = e.boss ? 0.3 : e.elite ? 0.7 : 1, fr = 1 + 0.05 * P.mast.frost, dot = P.boons.malice ? 1.5 : 1, cc = P.boons.malice ? 1.3 : 1;
-  if (o.burn) { const dps = d * o.burn / 3 * (1 + 0.06 * P.mast.fire) * dot; if (!e.burn || e.burn.dps < dps) e.burn = { dps, t: 3 }; else e.burn.t = 3; }
+  const res = e.boss ? 0.3 : e.elite ? 0.7 : 1, fr = 1, dot = P.boons.malice ? 1.5 : 1, cc = P.boons.malice ? 1.3 : 1;
+  if (o.burn) { const dps = d * o.burn / 3 * dot; if (!e.burn || e.burn.dps < dps) e.burn = { dps, t: 3 }; else e.burn.t = 3; }
   if (o.poison) { const dps = d * o.poison / 4 * dot; e.poison = { dps: e.poison ? Math.min(e.poison.dps + dps, dps * 6) : dps, t: 4 }; }
   if (o.chill) e.chill = Math.max(e.chill, o.chill * res * fr * cc);
   if (o.freeze) e.freeze = Math.max(e.freeze, o.freeze * res * fr * cc);
@@ -1261,6 +1308,7 @@ function dmgEnemy(e, amount, type, o) {
     d *= rnd(0.93, 1.07);
   }
   if (e.curse > 0) d *= 1.35;
+  if (e.mark > 0) d *= 1.5;
   if (P.c.overload && (e.stun > 0 || e.chill > 0 || e.freeze > 0)) d *= 1 + P.c.overload; // Stormcaller
   if (P.boons.exec && e.hp < e.maxHp * 0.3) d *= 1.4;
   if (P.boons.slayer && (e.boss || e.elite)) d *= 1.25;
@@ -1298,6 +1346,14 @@ function meleeArc(x, y, ang, range, arc, dmg, type, o) {
   }
   if (hit) sfx('hit');
   return hit;
+}
+function lineHit(x0, y0, x1, y1, w, dmg, type, o) {
+  const dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy || 1, col = TYPES[type] ? TYPES[type].color : '#fff';
+  for (let i = 0, n = G.enemies.length; i < n; i++) {
+    const e = G.enemies[i]; if (e.dead) continue;
+    const t = clamp(((e.x - x0) * dx + (e.y - y0) * dy) / L2, 0, 1), px = x0 + dx * t, py = y0 + dy * t;
+    if (Math.hypot(e.x - px, e.y - py) < w + e.r) { dmgEnemy(e, dmg, type, o); burst(e.x, e.y, col, 5, 90); }
+  }
 }
 function nova(x, y, r, dmg, type, o) {
   o = o || {};
@@ -1338,12 +1394,12 @@ function chainBolt(c, dmg, bounces) {
     cur = nx;
   }
 }
-function hexAt(x, y, r, dmg) {
+function hexAt(x, y, r, dmg, noCurse) {
   const col = TYPES.shadow.color; ringFx(x, y, r, col, 0.6, true); burst(x, y, col, 18, 160);
   const dps = dmg * typeMult('shadow') * dmgNow() / 4 * (P.boons.malice ? 1.5 : 1);
   for (const e of G.enemies) {
     if (e.dead || Math.hypot(e.x - x, e.y - y) > r + e.r) continue;
-    e.curse = 8; e.wither = { dps, t: 4 }; if (!e.awake) wake(e);
+    if (!noCurse) e.curse = 8; e.wither = { dps, t: 4 }; if (!e.awake) wake(e);
   }
 }
 function updProj(dt) {
@@ -1357,6 +1413,11 @@ function updProj(dt) {
     }
     p.x += p.vx * dt; p.y += p.vy * dt;
     if (solidAt(p.x, p.y)) { projEnd(p); continue; }
+    if (p.spray) {
+      p.tt -= dt;
+      if (p.tt <= 0) { p.tt = 0.16; p.sa = (p.sa || 0) + 0.7; for (let k = 0; k < 3; k++) shoot(p.x, p.y, p.sa + k * TAU / 3, 420, p.dmg, 'frost', { life: 0.55, look: 'shard', r: 4, o: { chill: 1.5 } }); }
+      continue;
+    }
     if (p.orb) {
       p.tt -= dt;
       if (p.tt <= 0) {
@@ -1670,6 +1731,7 @@ function killEnemy(e, o) {
     if (e.mods.includes('volatile')) tele(e.x, e.y, 88, 0.85, e.dmg * 1.4, { color: '#ff6a3d' });
     if (e.mods.includes('split')) { const o2 = lootPos(e); for (let i = 0; i < 3; i++) { const p = freeSpot(o2.x, o2.y, 30, 8); mkEnemy('swarm', p.x, p.y, { summoned: true }); } }
   }
+  if (e.mark > 0 && e.markDmg) { const x = e.x, y = e.y, d = e.markDmg; after(0.05, () => { nova(x, y, 96, d, 'guile', { poison: 0.5, nolos: 1 }); sfx('boom'); }); }
   if (e.boss) bossDead(e);
 }
 function bossDead(e) {
@@ -1697,6 +1759,7 @@ function updEnemies(dt) {
         if (e.wither) { dmgEnemy(e, e.wither.dps * 0.5, 'shadow', { dot: 1, raw: 1, col: '#c9a8ff' }); if (e.dead) continue; e.wither.t -= 0.5; if (e.wither.t <= 0) e.wither = null; }
       }
     }
+    if (e.mark > 0) e.mark -= dt;
     if (e.freeze > 0) { e.freeze -= dt; continue; }
     if (e.stun > 0) { e.stun -= dt; continue; }
     toP(e);
@@ -1704,6 +1767,7 @@ function updEnemies(dt) {
     if (!e.ghost && !e.air && (G.frame + i) % 20 === 0 && blocked(e.x, e.y, e.cr)) { const fp = freeSpot(e.x, e.y, 24, e.cr); e.x = fp.x; e.y = fp.y; }
     if (!e.awake) { if ((G.frame + i) % 6 === 0 && e.d < 350 && (e.d < 110 || los(e.x, e.y, P.x, P.y))) wake(e); continue; }
     e.losT -= dt; if (e.losT <= 0) { e.losT = 0.18 + R() * 0.1; e.los = e.d < 520 && los(e.x, e.y, P.x, P.y); }
+    if (e.fear > 0) { e.fear -= dt; e.wind = 0; if (e.st) e.st = 0; stepE(e, -e.dx / e.d, -e.dy / e.d, dt, 0.9); continue; }
     if (e.regen) e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.02 * dt);
     if (e.arcT !== undefined) { e.arcT -= dt; if (e.arcT <= 0 && e.d < 380) { e.arcT = 3.6; eRadial(e, 6, 150, rnd(0, 1), { color: '#c58bff' }); } }
     AI[e.ai](e, dt);
@@ -1803,7 +1867,8 @@ function mkItem(ilvl, o) {
   while (it.aff.length < n && guard++ < 80) {
     const k = wpick(Object.keys(AFF), k => { const a = AFF[k]; return (!a.slots.includes(slot) || (a.minRar && rar < a.minRar)) ? 0 : a.w; });
     const a = AFF[k]; let t = null;
-    if (a.typed) t = wpick(TYPE_KEYS, tk => (P && P.mp[tk] > 0) ? 3 : 1);
+    if (a.typed) t = P ? pick(P.c.schools) : pick(TYPE_KEYS); // school damage only rolls for your own schools
+    else if (a.mtyped) t = pick(MAST_KEYS);
     const key = k + (t || ''); if (used.has(key) || (k === 'mast' && used.has('mast*'))) continue;
     used.add(key); if (k === 'mast') used.add('mast*');
     let v;
@@ -1822,7 +1887,7 @@ function itemName(it) {
   const t = Math.min(MATS.length - 1, tierOf(it.ilvl)), noun = it.slot === 'weapon' ? WKIND[it.kind].name : SLOT_NOUN[it.slot];
   if (it.leg) return LEG[it.leg].name + ' ' + noun;
   let s = ((it.slot === 'ring' || it.slot === 'amulet') ? JMATS[t] : MATS[t]) + ' ' + noun;
-  if (it.aff.length) { const a = it.aff[0]; s += ' ' + (a.t ? TYPE_SFX[a.t] : AFF[a.k].sfx); }
+  if (it.aff.length) { const a = it.aff[0]; s += ' ' + (a.k === 'mast' ? MAST[a.t].sfx : a.t ? TYPE_SFX[a.t] : AFF[a.k].sfx); }
   return s;
 }
 function itemIcon(it) { return it.slot === 'weapon' ? (it.kind === 'axe' ? 'axe' : it.kind) : it.slot; }
@@ -1833,7 +1898,7 @@ function itemLines(it) {
   if (it.hp) L.push({ b: 1, t: '+' + Math.round(it.hp * um) + ' health' });
   if (it.mana) L.push({ b: 1, t: '+' + Math.round(it.mana * um) + ' mana' });
   if (it.mspd) L.push({ b: 1, t: '+' + pc(it.mspd) + ' move speed' });
-  for (const a of it.aff) L.push({ t: AFF[a.k].f(a.k === 'mast' ? a.v : a.v * am, a.t), c: a.t ? TYPES[a.t].color : null });
+  for (const a of it.aff) L.push({ t: AFF[a.k].f(a.k === 'mast' ? a.v : a.v * am, a.t), c: a.k === 'mast' ? MAST[a.t].color : a.t ? TYPES[a.t].color : null });
   return L;
 }
 function itemScore(it) { return ipow(it.ilvl) * RAR_MUL[it.rar] * (1 + 0.1 * it.aff.length + (it.leg ? 0.5 : 0)) * (1 + UPM * it.up); }
@@ -1843,8 +1908,8 @@ function isUpgrade(it) {
   return itemScore(it) > itemScore(cur) * 1.03;
 }
 function mkTome(f) {
-  const t = tierOf(f) + 1, maxT = Math.min(3, t), pool = Object.values(AB).filter(a => a.tier <= t);
-  const a = wpick(pool, a => (a.tier === maxT ? 3 : a.tier === maxT - 1 ? 1.6 : 1) * (P && P.mp[a.type] > 0 ? 2.2 : 1) * (P && P.ab[a.id] ? 1.3 : 1));
+  const t = tierOf(f) + 1, maxT = Math.min(3, t), sch = P ? P.c.schools : TYPE_KEYS, pool = Object.values(AB).filter(a => a.tier <= t && sch.includes(a.type));
+  const a = wpick(pool, a => (a.tier === maxT ? 3 : a.tier === maxT - 1 ? 1.6 : 1) * (P && P.ab[a.id] ? 1.2 : 1));
   return { ab: a.id, ranks: 1 + Math.floor(tierOf(f) / 2) };
 }
 function tomePrice(t) { return Math.round(150 * gpow(G.floor + 1) * (1 + 0.5 * (AB[t.ab].tier - 1)) * t.ranks); }
@@ -1852,7 +1917,7 @@ function tomePrice(t) { return Math.round(150 * gpow(G.floor + 1) * (1 + 0.5 * (
 function recalc() {
   const p = P, c = p.c, L = p.level;
   const g = { atkPct: 0, sp: 0, spPct: 0, hp: 0, mana: 0, armor: 0, crit: 0, critDmg: 0, aspd: 0, mspd: 0, leech: 0, cdr: 0, hpRegen: 0, manaRegen: 0, dodge: 0, gold: 0, mf: 0, xp: 0 };
-  const td = {}, gm = {}; for (const k of TYPE_KEYS) { td[k] = 0; gm[k] = 0; }
+  const td = {}, gm = {}; for (const k of TYPE_KEYS) td[k] = 0; for (const k of MAST_KEYS) gm[k] = 0;
   p.leg = {}; let wAtk = 6, wSp = 4, wk = WKIND.sword;
   for (const s of SLOTS) {
     const it = p.eq[s]; if (!it) continue;
@@ -1862,25 +1927,26 @@ function recalc() {
     for (const a of it.aff) { if (a.k === 'tdmg') td[a.t] += a.v * am; else if (a.k === 'mast') gm[a.t] += a.v; else g[a.k] += a.v * am; }
     if (it.leg) p.leg[it.leg] = true;
   }
-  for (const k of TYPE_KEYS) { p.mast[k] = p.mp[k] + gm[k]; p.tdmg[k] = td[k]; }
+  let N = 0; for (const k of MAST_KEYS) { p.mast[k] = (p.mp[k] || 0) + gm[k]; N += p.mast[k]; } p.mastTotal = N;
+  for (const k of TYPE_KEYS) p.tdmg[k] = td[k];
   const m = p.mast, b = p.bless, rl = p.relics, bn = p.boons || {}, lv = 1 + 0.02 * (L - 1), oldMax = p.maxHp;
-  p.maxHp = (c.hp + c.hpL * (L - 1) + g.hp) * (1 + 0.03 * m.valor + 0.12 * rl.hp + (b === 'vigor' ? 0.2 : 0) + (p.leg.titan ? 0.25 : 0) + (bn.jugg ? 0.2 : 0) + 0.1 * (bn.vit || 0)) * (bn.glass ? 0.85 : 1);
-  p.maxMana = (c.mana + c.manaL * (L - 1) + g.mana) * (1 + 0.02 * m.shadow + 0.15 * rl.mana + (bn.battery ? 0.3 : 0));
-  p.atk = wAtk * (1 + g.atkPct) * lv; p.sp = (wSp + g.sp) * (1 + g.spPct + (c.spPct || 0)) * lv;
+  p.maxHp = (c.hp + c.hpL * (L - 1) + g.hp) * (1 + 0.03 * m.vitality + 0.12 * rl.hp + (b === 'vigor' ? 0.2 : 0) + (p.leg.titan ? 0.25 : 0) + (bn.jugg ? 0.2 : 0) + 0.1 * (bn.vit || 0)) * (bn.glass ? 0.85 : 1);
+  p.maxMana = (c.mana + c.manaL * (L - 1) + g.mana) * (1 + 0.03 * m.focus + 0.15 * rl.mana + (bn.battery ? 0.3 : 0));
+  p.atk = (wAtk + MP_FLAT * N) * (1 + g.atkPct + MP_PCT * N) * lv; p.sp = (wSp + g.sp + MP_FLAT * N) * (1 + g.spPct + (c.spPct || 0) + MP_PCT * N) * lv;
   p.armor = (c.armor || 0) * (1 + 0.12 * (L - 1)) + g.armor;
-  p.crit = Math.min(0.75, 0.05 + g.crit + 0.01 * m.blade + (c.crit || 0) + (wk.crit || 0) + (bn.deadeye ? 0.1 : 0));
-  p.critDmg = 1.5 + g.critDmg + (c.critDmg || 0) + (bn.deadeye ? 0.3 : 0);
-  p.aspd = 1 + g.aspd + 0.015 * m.archery + (bn.quick ? 0.15 : 0);
-  p.spd = c.spd * Math.min(1.7, 1 + g.mspd + 0.01 * m.guile + (p.leg.wind ? 0.18 : 0));
-  p.dodge = Math.min(0.5, g.dodge + 0.01 * m.guile);
-  p.leech = g.leech + 0.003 * m.shadow + (p.leg.blood ? 0.04 : 0) + (bn.vamp ? 0.03 : 0);
-  p.cdr = Math.min(bn.quick ? 0.6 : 0.5, g.cdr + 0.01 * m.storm + (bn.quick ? 0.15 : 0));
+  p.crit = Math.min(0.75, 0.05 + g.crit + 0.01 * m.precision + (c.crit || 0) + (wk.crit || 0) + (bn.deadeye ? 0.1 : 0));
+  p.critDmg = 1.5 + g.critDmg + 0.03 * m.precision + (c.critDmg || 0) + (bn.deadeye ? 0.3 : 0);
+  p.aspd = 1 + g.aspd + 0.015 * m.haste + (bn.quick ? 0.15 : 0);
+  p.spd = c.spd * Math.min(1.7, 1 + g.mspd + 0.01 * m.haste + (p.leg.wind ? 0.18 : 0));
+  p.dodge = Math.min(0.5, g.dodge);
+  p.leech = g.leech + (p.leg.blood ? 0.04 : 0) + (bn.vamp ? 0.03 : 0);
+  p.cdr = Math.min(bn.quick ? 0.6 : 0.5, g.cdr + 0.01 * m.focus + (bn.quick ? 0.15 : 0));
   p.hpRegen = p.maxHp * 0.004 + g.hpRegen;
-  p.manaRegen = (1 + p.maxMana * 0.04) * (1 + g.manaRegen + (c.manaRegen || 0) + 0.15 * rl.mana + (bn.battery ? 0.3 : 0));
-  p.dmgMul = (1 + 0.08 * rl.dmg) * (b === 'wrath' ? 1.15 : 1) * (bn.glass ? 1.35 : 1) * (1 + 0.1 * (bn.might || 0));
+  p.manaRegen = (1 + p.maxMana * 0.04) * (1 + g.manaRegen + 0.03 * m.focus + (c.manaRegen || 0) + 0.15 * rl.mana + (bn.battery ? 0.3 : 0));
+  p.dmgMul = (1 + 0.08 * rl.dmg) * (1 + 0.02 * m.might) * (b === 'wrath' ? 1.15 : 1) * (bn.glass ? 1.35 : 1) * (1 + 0.1 * (bn.might || 0));
   p.drFlat = 1 - (1 - (c.dr || 0)) * (b === 'warding' ? 0.85 : 1) * (bn.jugg ? 0.9 : 1);
-  p.goldFind = g.gold + (b === 'fortune' ? 0.5 : 0) + (p.leg.midas ? 1 : 0) + (bn.treasure ? 0.4 : 0);
-  p.mf = g.mf + (b === 'fortune' ? 0.3 : 0) + (bn.treasure ? 0.3 : 0); p.xpB = g.xp + (b === 'insight' ? 0.3 : 0) + (bn.scholar ? 0.2 : 0);
+  p.goldFind = g.gold + 0.04 * m.fortune + (b === 'fortune' ? 0.5 : 0) + (p.leg.midas ? 1 : 0) + (bn.treasure ? 0.4 : 0);
+  p.mf = g.mf + 0.03 * m.fortune + (b === 'fortune' ? 0.3 : 0) + (bn.treasure ? 0.3 : 0); p.xpB = g.xp + 0.02 * m.fortune + (b === 'insight' ? 0.3 : 0) + (bn.scholar ? 0.2 : 0);
   p.potMax = 3 + rl.flask + (p.belt || 0); p.dashCdMax = 2.2 * (c.dashCd || 1) * (p.leg.wind ? 0.6 : 1);
   p.dashMax = 1 + (bn.twin ? 1 : 0); if (p.dashN > p.dashMax) p.dashN = p.dashMax;
   if (oldMax > 1 && p.maxHp > oldMax && !p.dead) p.hp += p.maxHp - oldMax;
@@ -2056,6 +2122,7 @@ function drawGround(c) {
     c.globalAlpha = 0.55 * k; c.strokeStyle = z.color; c.lineWidth = 1.5; c.setLineDash([6, 6]); c.lineDashOffset = -t * 30;
     c.beginPath(); c.arc(z.x, z.y, z.r, 0, TAU); c.stroke(); c.setLineDash([]);
     if (z.look === 'rift') { c.globalAlpha = 0.7 * k; c.fillStyle = '#07040f'; circ(c, z.x, z.y, z.r * 0.28); c.lineWidth = 2; for (let i = 0; i < 3; i++) { c.beginPath(); c.arc(z.x, z.y, z.r * (0.4 + i * 0.2), -t * 4 + i * 2, -t * 4 + i * 2 + 2.2); c.stroke(); } }
+    else if (z.look === 'spikes') { c.globalAlpha = 0.9 * k; c.fillStyle = '#c8d6cf'; for (let i = 0; i < 16; i++) { const h = hash2(i, 7), ax = z.x + ((h % 200) / 100 - 1) * z.r * 0.75, ay = z.y + (((h >> 8) % 200) / 100 - 1) * z.r * 0.75; poly(c, [ax, ay - 4, ax + 3, ay + 2, ax - 3, ay + 2]); } }
     else if (z.look === 'arrows' || z.look === 'snow') { c.globalAlpha = 0.8 * k; c.strokeStyle = z.look === 'snow' ? '#e6f7ff' : '#fff3d6'; c.lineWidth = 1.3; for (let i = 0; i < 9; i++) { const h = hash2(i, (t * 9 + i * 3) | 0), ax = z.x + ((h % 200) / 100 - 1) * z.r * 0.75, ay = z.y + (((h >> 8) % 200) / 100 - 1) * z.r * 0.75; line(c, ax + 3, ay - 9, ax, ay); } }
     c.globalAlpha = 1;
   }
@@ -2195,6 +2262,9 @@ function drawEnemy(c, e) {
   if (e.wind > 0 && e.ai !== 'bomb') { c.strokeStyle = 'rgba(255,255,255,' + (0.45 + 0.4 * Math.sin(G.time * 30)).toFixed(2) + ')'; c.lineWidth = 1.5; c.beginPath(); c.arc(x, y, r + 2, 0, TAU); c.stroke(); }
   if (e.freeze > 0) { c.fillStyle = 'rgba(160,220,255,.35)'; circ(c, x, y, r + 2); }
   else if (e.stun > 0) { c.fillStyle = '#ffe14d'; for (let i = 0; i < 3; i++) { const a = G.time * 6 + i * TAU / 3; circ(c, x + Math.cos(a) * r * .8, y - r - 6 + Math.sin(a) * 2, 1.6); } }
+  if (e.mark > 0) { c.strokeStyle = '#3fd6ae'; c.lineWidth = 1.5; line(c, x - 5, y - r - 16, x + 5, y - r - 6); line(c, x + 5, y - r - 16, x - 5, y - r - 6); }
+  if (e.bombT > 0) { c.fillStyle = Math.sin(G.time * 20) > 0 ? '#ff7b2e' : '#ffd27a'; circ(c, x, y - r - 9, 3); }
+  if (e.fear > 0) { c.fillStyle = '#c9a8ff'; c.font = '700 10px ' + FONT; c.textAlign = 'center'; c.fillText('!', x, y - r - 6); }
   if (e.curse > 0) { c.strokeStyle = 'rgba(168,119,255,.85)'; c.lineWidth = 1.2; c.beginPath(); c.arc(x, y, r + 5, G.time * 3, G.time * 3 + 4); c.stroke(); }
   if (!e.boss) {
     const w = Math.max(18, r * 2.2), top = y - r - 9;
@@ -2258,6 +2328,8 @@ function drawLit(c) {
       case 'arrow': c.strokeStyle = '#fff3d6'; c.lineWidth = 1.7; line(c, -(p.len || 12), 0, 3, 0); break;
       case 'knife': c.strokeStyle = '#e6fff6'; c.lineWidth = 1.6; line(c, -6, 0, 2, 0); break;
       case 'shard': c.fillStyle = '#e6f7ff'; poly(c, [p.len || 9, 0, 0, -p.r * 0.6, -6, 0, 0, p.r * 0.6]); break;
+      case 'wave': c.strokeStyle = '#ffd9d0'; c.lineWidth = 3.5; c.lineCap = 'round'; c.beginPath(); c.arc(-10, 0, 20, -1.1, 1.1); c.stroke(); c.strokeStyle = p.color; c.lineWidth = 1.5; c.beginPath(); c.arc(-14, 0, 18, -1, 1); c.stroke(); break;
+      case 'frost': c.rotate(t * 6); c.fillStyle = '#e6f7ff'; for (let k = 0; k < 6; k++) { c.rotate(TAU / 6); poly(c, [0, -2, 11, 0, 0, 2]); } break;
       case 'glaive': c.rotate(t * 22); c.strokeStyle = '#f2ffd9'; c.lineWidth = 2; line(c, -7, 0, 7, 0); line(c, 0, -7, 0, 7); break;
       case 'storm': c.fillStyle = '#ffffff'; circ(c, 0, 0, p.r * 0.6); c.strokeStyle = p.color; c.lineWidth = 1.2; for (let i = 0; i < 3; i++) { const a = t * 9 + i * 2.1; line(c, 0, 0, Math.cos(a) * 15, Math.sin(a) * 15); } break;
       default: c.fillStyle = '#ffffff'; circ(c, 0, 0, p.r * 0.55);
@@ -2411,7 +2483,7 @@ function setTxt(id, v) { if (hudC[id] !== v) { hudC[id] = v; $(id).textContent =
 function setVar(id, name, v) { const k = id + name; if (hudC[k] !== v) { hudC[k] = v; $(id).style.setProperty(name, v); } }
 function setCls(id, cls, on) { const k = id + '.' + cls; if (hudC[k] !== on) { hudC[k] = on; $(id).classList.toggle(cls, on); } }
 function setHidden(id, h) { const k = id + '#h'; if (hudC[k] !== h) { hudC[k] = h; $(id).hidden = h; } }
-const BUFFN = { warcry: ['War Cry', '#d3dbee'], ironskin: ['Iron Skin', '#d3dbee'], step: ['Deadly', '#3fd6ae'], fury: ['Fury', '#ff6b5e'], haste: ['Haste', '#a4d15a'], aegis: ['Aegis', '#6fcbff'] };
+const BUFFN = { rally: ['Rally', '#7fe08f'], avatar: ['Avatar', '#f2c75c'], icearmor: ['Ice Armor', '#6fcbff'], warcry: ['War Cry', '#d3dbee'], ironskin: ['Iron Skin', '#d3dbee'], step: ['Deadly', '#3fd6ae'], fury: ['Fury', '#ff6b5e'], haste: ['Haste', '#a4d15a'], aegis: ['Aegis', '#6fcbff'] };
 let hudSlow = 0;
 function updHud(dt) {
   if (!G || G.mode === 'title') return;
@@ -2492,19 +2564,16 @@ function renderPanel(top) {
   b.scrollTop = top ? 0 : st;
 }
 function tabMast() {
-  let h = '<div class="pts"><b>' + P.pts + '</b><span>mastery point' + (P.pts === 1 ? '' : 's') + ' to spend</span><em>Each point adds 7% damage to every ability of that type, plus its perk, for the rest of the run. You earn 2 points per level and 1 per boss.</em></div>';
-  for (const kind of ['skill', 'spell']) {
-    h += '<h3>' + (kind === 'skill' ? 'Skill types' : 'Spell types') + '</h3><div class="mlist">';
-    for (const k of TYPE_KEYS) {
-      const t = TYPES[k]; if (t.kind !== kind) continue;
-      const gear = P.mast[k] - P.mp[k], known = AB_BY_TYPE[k].filter(a => P.ab[a.id]).map(a => a.name).join(', ') || 'No ' + t.name + ' abilities learned yet';
-      h += '<div class="mrow" style="--tc:' + t.color + '"><div class="mi">' + svg(t.icon) + '</div><div class="mt"><b>' + t.name + '</b><span>' + t.perk + ' per point</span><small>' + esc(known) + '</small></div>' +
-        '<div class="mv">' + P.mast[k] + (gear ? '<small>incl. ' + gear + ' gear</small>' : '') + '</div>' +
-        '<button class="btn plus" data-act="mast" data-v="' + k + '" ' + (P.pts > 0 ? '' : 'disabled') + ' aria-label="Add a point to ' + t.name + '">+</button></div>';
-    }
-    h += '</div>';
+  const N = P.mastTotal || 0;
+  let h = '<div class="pts"><b>' + P.pts + '</b><span>mastery point' + (P.pts === 1 ? '' : 's') + ' to spend</span><em>Every point, in any mastery, gives +' + MP_FLAT + ' attack and spell power and +' + Math.round(MP_PCT * 100) + '% more of both, plus that mastery\'s perk. You earn 2 points per level and 1 per boss.</em></div>' +
+    '<p class="hint">' + N + ' point' + (N === 1 ? '' : 's') + ' so far: +' + MP_FLAT * N + ' attack and spell power, then +' + Math.round(MP_PCT * 100 * N) + '% to both.</p><div class="mlist">';
+  for (const k of MAST_KEYS) {
+    const t = MAST[k], gear = P.mast[k] - P.mp[k];
+    h += '<div class="mrow" style="--tc:' + t.color + '"><div class="mi">' + svg(t.icon) + '</div><div class="mt"><b>' + t.name + '</b><span>' + t.perk + ' per point</span></div>' +
+      '<div class="mv">' + P.mast[k] + (gear ? '<small>incl. ' + gear + ' gear</small>' : '') + '</div>' +
+      '<button class="btn plus" data-act="mast" data-v="' + k + '" ' + (P.pts > 0 ? '' : 'disabled') + ' aria-label="Add a point to ' + t.name + '">+</button></div>';
   }
-  return h;
+  return h + '</div>';
 }
 function abMeta(a) { const cd = abCd(a.id); return TYPES[a.type].name + ' ' + TYPES[a.type].kind + ' · ' + (a.mana ? a.mana + ' mana · ' : '') + (cd < 10 ? cd.toFixed(1) : Math.round(cd)) + 's cooldown'; }
 function abStatic(a) { return a.desc.replace(/\{(\d+)\}/g, (m, n) => '<b>' + n + '%</b>'); }
@@ -2519,10 +2588,10 @@ function tabAbil() {
   }
   const tn = ['', 'Tier I · found from floor 1', 'Tier II · found from floor 11', 'Tier III · found from floor 21'];
   for (let t = 1; t <= 3; t++) {
-    const rest = Object.values(AB).filter(a => a.tier === t && !P.ab[a.id]); if (!rest.length) continue;
+    const rest = Object.values(AB).filter(a => a.tier === t && !P.ab[a.id] && P.c.schools.includes(a.type)); if (!rest.length) continue;
     h += '<h3>Still to find: ' + tn[t] + '</h3><div class="locked">' + rest.map(a => '<span style="--tc:' + TYPES[a.type].color + '">' + svg(a.icon) + a.name + '</span>').join('') + '</div>';
   }
-  h += '<p class="hint">Tomes drop from bosses, elites and chests. Finding one you already know raises its rank by 15% damage. Deeper tiers drop stronger tomes.</p>';
+  h += '<p class="hint">As a ' + P.c.name + ' you only find ' + P.c.schools.map(k => TYPES[k].name).join(' and ') + ' tomes. They drop from bosses, elites and chests. Finding one you already know raises its rank by 15% damage. Deeper tiers drop stronger tomes.</p>';
   return h;
 }
 function itemCell(it, o) {
@@ -2673,7 +2742,7 @@ const ACTS = {
   close() { if (npcOpen) closeNpc(); else closePanel(); },
   tab(v) { panelTab = v; selItem = null; abandonArm = false; sfx('ui'); return 'top'; },
   ntab(v) { npcTab = v; selItem = null; sfx('ui'); return 'top'; },
-  mast(k) { if (P.pts <= 0) return; P.pts--; P.mp[k]++; recalc(); sfx('pick'); },
+  mast(k) { if (P.pts <= 0 || !MAST[k]) return; P.pts--; P.mp[k]++; recalc(); sfx('pick'); },
   slot(v) {
     const [id, i] = v.split(':'), s = +i, cur = P.slots.indexOf(id);
     if (cur === s) P.slots[s] = null; else { if (cur >= 0) P.slots[cur] = P.slots[s]; P.slots[s] = id; }
@@ -2707,10 +2776,10 @@ const ACTS = {
   brelic(k) { const r = RELICS[k]; if ((r.max && P.relics[k] >= r.max) || !pay('tok', tokPrice(k, r.cost))) return; P.tokCost[k] = (P.tokCost[k] || 0) + 1; P.relics[k]++; recalc(); if (k === 'flask') P.pot = Math.min(P.potMax, P.pot + 1); toast(r.name + ' acquired', 'gold'); },
   bleg() { if (P.bag.length >= BAG_MAX || !pay('tok', 10)) return; const it = mkItem(G.floor + 2, { rar: 4 }); P.bag.push(it); toast(it.name + ' added to your backpack', 'r4'); sfx('rare'); },
   brespec() {
-    let back = 0; for (const k of TYPE_KEYS) back += P.mp[k] - (P.c.mast[k] || 0);
+    let back = 0; for (const k of MAST_KEYS) back += P.mp[k];
     if (back <= 0) { toast('No spent points to refund'); return; }
     if (!pay('tok', 2)) return;
-    for (const k of TYPE_KEYS) P.mp[k] = P.c.mast[k] || 0; P.pts += back; recalc(); toast(back + ' mastery point' + (back === 1 ? '' : 's') + ' refunded', 'gold');
+    for (const k of MAST_KEYS) P.mp[k] = 0; P.pts += back; recalc(); toast(back + ' mastery point' + (back === 1 ? '' : 's') + ' refunded', 'gold');
   },
   boon(k) {
     if (!G.boonOffer || !G.boonOffer.includes(k)) return;
@@ -2757,19 +2826,19 @@ function saveRun() {
   if (!G || !P || P.dead || G.mode !== 'play') return;
   try {
     localStorage.setItem(SAVE_KEY, JSON.stringify({
-      v: 1, cls: P.cls, floor: G.floor, sanct: G.sanct, kills: G.kills, bossKills: G.bossKills, runTime: G.runTime, goldEarned: G.goldEarned,
+      v: 2, cls: P.cls, floor: G.floor, sanct: G.sanct, kills: G.kills, bossKills: G.bossKills, runTime: G.runTime, goldEarned: G.goldEarned,
       p: { level: P.level, xp: P.xp, pts: P.pts, mp: P.mp, ab: P.ab, slots: P.slots, eq: P.eq, bag: P.bag, gold: P.gold, tokens: P.tokens, relics: P.relics, bless: P.bless, tokCost: P.tokCost, belt: P.belt, boons: P.boons, pot: P.pot, hp: P.hp, mana: P.mana },
       shops: G.sanct ? G.shops : null,
     }));
   } catch (e) { /* storage is optional: without it the run just cannot be resumed */ }
 }
 function loadSave() {
-  try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return s && s.v === 1 && CLASSES[s.cls] && s.floor >= 1 && s.p ? s : null; } catch (e) { return null; }
+  try { const s = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return s && (s.v === 1 || s.v === 2) && CLASSES[s.cls] && s.floor >= 1 && s.p ? s : null; } catch (e) { return null; }
 }
 function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* storage is optional */ } }
 function cleanItem(it) {
   if (!it || !SLOTS.includes(it.slot) || !(it.ilvl >= 1) || !Array.isArray(it.aff) || (it.slot === 'weapon' && !WKIND[it.kind])) return null;
-  it.aff = it.aff.filter(a => a && AFF[a.k] && (!AFF[a.k].typed || TYPES[a.t])); if (!LEG[it.leg]) it.leg = null;
+  it.aff = it.aff.filter(a => a && AFF[a.k] && (!AFF[a.k].typed || TYPES[a.t]) && (!AFF[a.k].mtyped || MAST[a.t])); if (!LEG[it.leg]) it.leg = null;
   it.rar = clamp(it.rar | 0, 0, 4); it.up = clamp(it.up | 0, 0, 10); it.name = String(it.name || itemName(it)); it.val = Math.max(1, it.val | 0);
   return it;
 }
@@ -2779,16 +2848,19 @@ function resumeRun() {
   G = newRunState(); newPlayer(s.cls);
   const q = s.p;
   P.level = Math.max(1, q.level | 0); P.xp = Math.max(0, +q.xp || 0); P.pts = Math.max(0, q.pts | 0);
-  for (const k of TYPE_KEYS) P.mp[k] = Math.max(0, (q.mp && q.mp[k]) | 0);
-  P.ab = {}; for (const id in (q.ab || {})) if (AB[id]) P.ab[id] = { rank: Math.max(1, q.ab[id].rank | 0) };
+  if (s.v === 1) { let spent = 0; for (const k in (q.mp || {})) spent += Math.max(0, q.mp[k] | 0); P.pts += Math.max(0, spent - 3); } // old school masteries: refund what was spent
+  else for (const k of MAST_KEYS) P.mp[k] = Math.max(0, (q.mp && q.mp[k]) | 0);
+  P.ab = {}; for (const id in (q.ab || {})) if (AB[id] && P.c.schools.includes(AB[id].type)) P.ab[id] = { rank: Math.max(1, q.ab[id].rank | 0) };
+  for (const id of P.c.abilities) if (!P.ab[id]) P.ab[id] = { rank: 1 };
   P.slots = [0, 1, 2, 3].map(i => (q.slots && P.ab[q.slots[i]]) ? q.slots[i] : null);
+  if (!P.slots.some(Boolean)) P.c.abilities.forEach((id, i) => { P.slots[i] = id; });
   for (const sl of SLOTS) { const it = q.eq && cleanItem(q.eq[sl]); if (it && it.slot === sl) P.eq[sl] = it; else if (sl !== 'weapon') delete P.eq[sl]; }
   P.bag = (q.bag || []).map(cleanItem).filter(Boolean).slice(0, BAG_MAX);
   P.gold = Math.max(0, +q.gold || 0); P.tokens = Math.max(0, q.tokens | 0); P.belt = clamp(q.belt | 0, 0, BELT_MAX);
   for (const k in P.relics) P.relics[k] = Math.max(0, (q.relics && q.relics[k]) | 0);
   P.tokCost = q.tokCost || {}; P.boons = {}; for (const k in (q.boons || {})) if (BOONS[k]) P.boons[k] = Math.max(1, q.boons[k] | 0);
   G.kills = s.kills | 0; G.bossKills = s.bossKills | 0; G.runTime = +s.runTime || 0; G.goldEarned = +s.goldEarned || 0;
-  const shops = (s.sanct && s.shops && Array.isArray(s.shops.items)) ? { items: s.shops.items.map(cleanItem).filter(Boolean), tomes: (s.shops.tomes || []).filter(t => t && AB[t.ab]), cache: (s.shops.cache || []).filter(t => t && AB[t.ab]), healed: !!s.shops.healed, sel: null } : null;
+  const shops = (s.sanct && s.shops && Array.isArray(s.shops.items)) ? { items: s.shops.items.map(cleanItem).filter(Boolean), tomes: (s.shops.tomes || []).filter(t => t && AB[t.ab] && P.c.schools.includes(AB[t.ab].type)), cache: (s.shops.cache || []).filter(t => t && AB[t.ab] && P.c.schools.includes(AB[t.ab].type)), healed: !!s.shops.healed, sel: null } : null;
   let mx = 0; const seen = it => { if (it && it.id > mx) mx = it.id; };
   SLOTS.forEach(sl => seen(P.eq[sl])); P.bag.forEach(seen); if (shops) shops.items.forEach(seen); UID = Math.max(UID, mx + 1);
   for (const k in hudC) delete hudC[k];
@@ -2815,7 +2887,7 @@ function renderTitle() {
     h += '<button class="cls plate ' + (k === selClass ? 'on' : '') + '" style="--cc:' + x.color + '" data-act="cls" data-v="' + k + '" aria-pressed="' + (k === selClass) + '"><b>' + x.name + '</b><span class="tg">' + x.tag + '</span><span class="ics">' +
       x.abilities.map(a => '<span style="color:' + TYPES[AB[a].type].color + '">' + svg(AB[a].icon) + '</span>').join('') + '</span></button>';
   }
-  h += '</div><div class="cls-d plate"><div class="cd-h" style="--cc:' + c.color + '"><b>' + c.name + '</b><span>' + c.tag + '</span></div><div class="vit"><span><b>' + c.hp + '</b> health</span><span><b>' + c.mana + '</b> mana</span><span><b>' + WKIND[c.weapon].name + '</b></span><span>Trained in <b>' + Object.keys(c.mast).map(k => TYPES[k].name).join(' and ') + '</b></span></div><p>' + c.passive + '</p>';
+  h += '</div><div class="cls-d plate"><div class="cd-h" style="--cc:' + c.color + '"><b>' + c.name + '</b><span>' + c.tag + '</span></div><div class="vit"><span><b>' + c.hp + '</b> health</span><span><b>' + c.mana + '</b> mana</span><span><b>' + WKIND[c.weapon].name + '</b></span><span>Schools: <b>' + c.schools.map(k => TYPES[k].name).join(' and ') + '</b> only</span></div><p>' + c.passive + '</p>';
   for (const id of c.abilities) { const a = AB[id]; h += '<div class="cab" style="color:' + TYPES[a.type].color + '">' + svg(a.icon) + '<div style="color:var(--bone)"><b style="color:' + TYPES[a.type].color + '">' + a.name + '</b> ' + abStatic(a) + '</div></div>'; }
   h += '</div><div class="t-go">' + (sv ? '<button class="btn big" data-act="start">Begin a new descent</button><small>A new run replaces the one in progress.</small><small>' : '<button class="btn hot big" data-act="start">Begin the descent</button><small>') +
     (input.touch ? 'Left thumb moves. Hold the sword to attack. Tap an ability to cast it, or drag it to aim.' : 'WASD move · mouse aims · click attacks · 1 to 4 abilities · Space dash · Q potion · E interact · Tab menu') + '</small>' +
