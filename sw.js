@@ -1,5 +1,5 @@
 // Emberdeep offline support: serve the saved copy at once, refresh it in the background for next time.
-const CACHE = 'emberdeep-3995383814';
+const CACHE = 'emberdeep-2897032069';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {
