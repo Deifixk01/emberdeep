@@ -155,7 +155,7 @@ h3:first-child{margin-top:2px}
 .mi{font-size:26px;color:var(--tc)}
 .mt{min-width:0;display:flex;flex-direction:column}
 .mt b{font:700 14px/1.2 var(--cond);letter-spacing:.08em;text-transform:uppercase;color:var(--tc)}
-.mt span{font-size:12px} .mt small{font-size:11px;color:var(--ash);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mt span{font-size:12px} .mt small{font-size:11px;line-height:1.3;color:var(--ash);margin-top:2px}
 .mv{font:700 22px/1 var(--cond);font-variant-numeric:tabular-nums;text-align:right;min-width:30px}
 .mv small{display:block;font:600 9px/1.2 var(--cond);color:var(--ash);letter-spacing:.04em}
 .btn.plus{min-height:44px;width:44px;padding:0;font-size:22px;--fill:var(--iron-3)}
@@ -546,31 +546,31 @@ const TYPES = {
 };
 const TYPE_KEYS = Object.keys(TYPES);
 /* General masteries: every point, whichever mastery it goes to, gives MP_FLAT attack and spell power and MP_PCT more of both. */
-const MP_FLAT = 5, MP_PCT = 0.01;
+const MP_FLAT = 5, MP_PCT = 0.01, CALL_PCT = 0.10;
 const MAST = {
   might: { name: 'Might', icon: 'blade', color: '#ee5a4f', perk: '+2% damage', sfx: 'of Might' },
   vitality: { name: 'Vitality', icon: 'heart', color: '#7fe08f', perk: '+3% maximum health', sfx: 'of the Bear' },
   precision: { name: 'Precision', icon: 'star', color: '#ffe14d', perk: '+1% critical chance, +3% critical damage', sfx: 'of Precision' },
   haste: { name: 'Haste', icon: 'dash', color: '#a4d15a', perk: '+1.5% attack speed, +1% move speed', sfx: 'of Haste' },
   focus: { name: 'Focus', icon: 'orb', color: '#6fcbff', perk: '+1% cooldown recovery, +3% mana and mana regeneration', sfx: 'of Focus' },
-  fortune: { name: 'Fortune', icon: 'coin', color: '#f2c75c', perk: '+4% gold, +3% magic find, +2% experience', sfx: 'of Fortune' },
+  calling: { name: 'Calling', icon: 'tome', color: '#c58bff', perk: '+10% strength to your class passive', sfx: 'of the Calling' },
 };
 const MAST_KEYS = Object.keys(MAST);
 const RANK_DMG = 0.15, UPM = 0.06, UPA = 0.03; // per mastery point, per ability rank, per temper step (base stats, bonuses)
 
 const CLASSES = {
   // melee
-  warrior: { name: 'Warrior', tag: 'Steel and stubbornness', hp: 150, hpL: 15, mana: 50, manaL: 3, armor: 8, spd: 150, weapon: 'sword', abilities: ['cleave', 'warcry'], schools: ['blade', 'valor'], passive: 'Bulwark: takes 12% less damage.', color: '#d8553f', dr: 0.12 },
-  berserker: { name: 'Berserker', tag: 'Bleeding only makes it angrier', hp: 140, hpL: 14, mana: 45, manaL: 3, armor: 5, spd: 154, weapon: 'axe', abilities: ['cleave', 'groundslam'], schools: ['blade', 'valor'], passive: 'Bloodrage: deals up to 40% more damage as health drops. Each kill restores 1.5% of maximum health.', color: '#e58a2e', rage: 0.4, killHeal: 0.015 },
-  spellblade: { name: 'Spellblade', tag: 'A sword in one hand, fire in the other', hp: 125, hpL: 12, mana: 80, manaL: 6, armor: 4, spd: 156, weapon: 'sword', abilities: ['cleave', 'firebolt'], schools: ['blade', 'fire'], passive: 'Spellweaving: casting a spell grants 3 Empower stacks. Each basic attack spends one to hit 50% harder; a Blade skill spends all of them for +30% damage per stack. +40% spell power.', color: '#e86a9f', empower: 3, empSkill: 0.3, spPct: 0.4 },
+  warrior: { name: 'Warrior', tag: 'Steel and stubbornness', hp: 150, hpL: 15, mana: 50, manaL: 3, armor: 8, spd: 150, weapon: 'sword', abilities: ['cleave', 'warcry'], schools: ['blade', 'valor'], passive: 'Bulwark: takes 12% less damage.', color: '#d8553f', dr: 0.12, calling: 'damage reduction, up to 40%' },
+  berserker: { name: 'Berserker', tag: 'Bleeding only makes it angrier', hp: 140, hpL: 14, mana: 45, manaL: 3, armor: 5, spd: 154, weapon: 'axe', abilities: ['cleave', 'groundslam'], schools: ['blade', 'valor'], passive: 'Bloodrage: deals up to 40% more damage as health drops. Each kill restores 1.5% of maximum health.', color: '#e58a2e', rage: 0.4, killHeal: 0.015, calling: 'rage damage and healing per kill' },
+  spellblade: { name: 'Spellblade', tag: 'A sword in one hand, fire in the other', hp: 125, hpL: 12, mana: 80, manaL: 6, armor: 4, spd: 156, weapon: 'sword', abilities: ['cleave', 'firebolt'], schools: ['blade', 'fire'], passive: 'Spellweaving: casting a spell grants 3 Empower stacks. Each basic attack spends one to hit 50% harder; a Blade skill spends all of them for +30% damage per stack. +40% spell power.', color: '#e86a9f', empower: 3, empSkill: 0.3, spPct: 0.4, calling: 'Empower bonuses' },
   // agile
-  ranger: { name: 'Ranger', tag: 'Death from a distance', hp: 120, hpL: 12, mana: 60, manaL: 4, armor: 3, spd: 162, weapon: 'bow', abilities: ['multishot', 'trap'], schools: ['archery', 'guile'], passive: 'Keen Eye: +10% critical chance.', color: '#8fc04a', crit: 0.10 },
-  warden: { name: 'Warden', tag: 'Cold arrows, colder patience', hp: 130, hpL: 13, mana: 70, manaL: 5, armor: 5, spd: 156, weapon: 'bow', abilities: ['powershot', 'frostnova'], schools: ['archery', 'frost'], passive: 'Frostbite: basic attacks chill, and critical hits freeze chilled enemies for a moment. +6% critical chance.', color: '#4fc9c0', chillShot: 1.5, shatter: 0.8, crit: 0.06 },
-  nightblade: { name: 'Nightblade', tag: 'Quick knives, borrowed souls', hp: 120, hpL: 12, mana: 70, manaL: 5, armor: 3, spd: 168, weapon: 'dagger', abilities: ['fanknives', 'soulbolt'], schools: ['guile', 'shadow'], passive: 'Venom: basic attacks and skills add a Venom stack to enemies, up to 5, for 5s. Each stack deals 8% of your attack power per second, and your spells deal 10% more damage per stack. Dash recharges 25% faster.', color: '#a070ff', venom: { max: 5, dps: 0.08, spell: 0.10, dur: 5 }, dashCd: 0.75 },
+  ranger: { name: 'Ranger', tag: 'Death from a distance', hp: 120, hpL: 12, mana: 60, manaL: 4, armor: 3, spd: 162, weapon: 'bow', abilities: ['multishot', 'trap'], schools: ['archery', 'guile'], passive: 'Keen Eye: +10% critical chance.', color: '#8fc04a', crit: 0.10, calling: 'critical chance bonus' },
+  warden: { name: 'Warden', tag: 'Cold arrows, colder patience', hp: 130, hpL: 13, mana: 70, manaL: 5, armor: 5, spd: 156, weapon: 'bow', abilities: ['powershot', 'frostnova'], schools: ['archery', 'frost'], passive: 'Frostbite: basic attacks chill, and critical hits freeze chilled enemies for a moment. +6% critical chance.', color: '#4fc9c0', chillShot: 1.5, shatter: 0.8, crit: 0.06, calling: 'critical chance bonus and freeze length' },
+  nightblade: { name: 'Nightblade', tag: 'Quick knives, borrowed souls', hp: 120, hpL: 12, mana: 70, manaL: 5, armor: 3, spd: 168, weapon: 'dagger', abilities: ['fanknives', 'soulbolt'], schools: ['guile', 'shadow'], passive: 'Venom: basic attacks and skills add a Venom stack to enemies, up to 5, for 5s. Each stack deals 8% of your attack power per second, and your spells deal 10% more damage per stack. Dash recharges 25% faster.', color: '#a070ff', venom: { max: 5, dps: 0.08, spell: 0.10, dur: 5 }, dashCd: 0.75, calling: 'Venom damage and spell bonus' },
   // casters
-  sorcerer: { name: 'Sorcerer', tag: 'Fire, frost and little patience', hp: 105, hpL: 10, mana: 110, manaL: 8, armor: 1, spd: 152, weapon: 'staff', abilities: ['firebolt', 'frostnova'], schools: ['fire', 'frost'], passive: 'Attunement: +15% spell power, +40% mana regeneration.', color: '#5c9dff', spPct: 0.15, manaRegen: 0.4 },
-  stormcaller: { name: 'Stormcaller', tag: 'Counts the seconds after the flash', hp: 105, hpL: 10, mana: 110, manaL: 8, armor: 1, spd: 152, weapon: 'staff', abilities: ['chainlightning', 'iceshard'], schools: ['storm', 'frost'], passive: 'Overload: stunned, chilled and frozen enemies take 20% more damage. +30% mana regeneration.', color: '#e6cf4a', overload: 0.2, manaRegen: 0.3 },
-  warlock: { name: 'Warlock', tag: 'Every curse is an investment', hp: 105, hpL: 10, mana: 105, manaL: 8, armor: 1, spd: 150, weapon: 'staff', abilities: ['hex', 'fireball'], schools: ['shadow', 'fire'], passive: 'Soul Harvest: enemies that die burning, cursed or withering restore 6% of your mana.', color: '#cf62e6', harvest: 0.06 },
+  sorcerer: { name: 'Sorcerer', tag: 'Fire, frost and little patience', hp: 105, hpL: 10, mana: 110, manaL: 8, armor: 1, spd: 152, weapon: 'staff', abilities: ['firebolt', 'frostnova'], schools: ['fire', 'frost'], passive: 'Attunement: +15% spell power, +40% mana regeneration.', color: '#5c9dff', spPct: 0.15, manaRegen: 0.4, calling: 'spell power and mana regeneration bonuses' },
+  stormcaller: { name: 'Stormcaller', tag: 'Counts the seconds after the flash', hp: 105, hpL: 10, mana: 110, manaL: 8, armor: 1, spd: 152, weapon: 'staff', abilities: ['chainlightning', 'iceshard'], schools: ['storm', 'frost'], passive: 'Overload: stunned, chilled and frozen enemies take 20% more damage. +30% mana regeneration.', color: '#e6cf4a', overload: 0.2, manaRegen: 0.3, calling: 'Overload damage and mana regeneration' },
+  warlock: { name: 'Warlock', tag: 'Every curse is an investment', hp: 105, hpL: 10, mana: 105, manaL: 8, armor: 1, spd: 150, weapon: 'staff', abilities: ['hex', 'fireball'], schools: ['shadow', 'fire'], passive: 'Spreading Doom: cursed or burning enemies burst into flame when they die, hitting enemies nearby for 80% of your spell power and passing on their curse and burn. Kindling Hex: cursed enemies take 5% more fire damage for every second they keep burning, up to +50%, and your fire hits refresh their curse.', color: '#cf62e6', doom: 0.8, kindle: 0.05, calling: 'Doom burst damage and Kindling bonus' },
 };
 
 const WKIND = {
@@ -1163,7 +1163,7 @@ function castSlot(i, man) {
   P.face = aim.ang; P.swing = 0.18;
   const c = { ang: aim.ang, tx: aim.tx, ty: aim.ty, pow: abPow(id), rank: abRank(id) };
   if (P.c.empSkill && a.type === 'blade' && P.emp > 0) { // Spellblade: a Blade skill spends every Empower stack
-    c.pow *= 1 + P.c.empSkill * P.emp; textFx(P.x, P.y - 26, 'Empowered ×' + P.emp, '#ff7b2e', 10); P.emp = 0;
+    c.pow *= 1 + P.c.empSkill * P.cp * P.emp; textFx(P.x, P.y - 26, 'Empowered ×' + P.emp, '#ff7b2e', 10); P.emp = 0;
   }
   a.cast(c);
   if (P.c.empower && TYPES[a.type].kind === 'spell') P.emp = P.c.empower; // Spellblade
@@ -1187,8 +1187,8 @@ function usePotion() {
 function basicAttack() {
   const w = P.eq.weapon, kind = w ? w.kind : 'sword', wk = WKIND[kind], ang = P.aim;
   P.atkT = 1 / (wk.rate * P.aspd * (P.buff.haste > 0 ? 1.3 : 1) * (1 + 0.04 * P.mom) * (P.buff.envenom > 0 && kind === 'dagger' ? 1.25 : 1)); P.swing = 0.16; P.face = ang;
-  let m = 1; if (P.emp > 0) { P.emp--; m = 1.5; }                 // Spellblade: empowered swings
-  const st = P.c.chillShot ? { chill: P.c.chillShot } : {};        // Warden: basic attacks chill
+  let m = 1; if (P.emp > 0) { P.emp--; m = 1 + 0.5 * P.cp; }                 // Spellblade: empowered swings
+  const st = P.c.chillShot ? { chill: P.c.chillShot * P.cp } : {};        // Warden: basic attacks chill
   if (wk.melee) {
     const o = Object.assign({ fxc: m > 1 ? TYPES.fire.color : null }, st);
     meleeArc(P.x, P.y, ang, wk.range, wk.arc, P.atk * m, wk.type, o);
@@ -1296,10 +1296,10 @@ function hurtPlayer(dmg, src, o) {
 /* ===================== DAMAGE PRIMITIVES (player -> enemies) ===================== */
 const TYPE_TXT = { blade: '#ffd9d0', archery: '#e6f5c2', guile: '#b6f5e2', valor: '#f1f4fb', fire: '#ffb27a', frost: '#bfe9ff', storm: '#fff3a6', shadow: '#d4bcff', arcane: '#e3d6ff' };
 function typeMult(type) { return 1 + ((TYPES[type] && P.tdmg[type]) || 0); } // school damage now comes only from gear
-function rageBonus() { return P.c.rage ? P.c.rage * (1 - clamp(P.hp / P.maxHp, 0, 1)) : 0; } // Berserker
+function rageBonus() { return P.c.rage ? P.c.rage * P.cp * (1 - clamp(P.hp / P.maxHp, 0, 1)) : 0; } // Berserker
 function dmgNow() { return P.dmgMul * (P.buff.warcry > 0 ? 1.3 : 1) * (P.buff.fury > 0 ? 1.4 : 1) * (P.buff.avatar > 0 ? 1.4 : 1) * (1 + rageBonus()); }
 function poisonLeft(e) { // all the poison damage still to come on an enemy
-  return (e.poison ? e.poison.dps * e.poison.t : 0) + (e.venom && P.c.venom ? e.venom.n * P.atk * P.c.venom.dps * e.venom.t : 0);
+  return (e.poison ? e.poison.dps * e.poison.t : 0) + (e.venom && P.c.venom ? e.venom.n * P.atk * P.c.venom.dps * P.cp * e.venom.t : 0);
 }
 function applySt(e, o, d) {
   const res = e.boss ? 0.3 : e.elite ? 0.7 : 1, fr = 1, dot = P.boons.malice ? 1.5 : 1, cc = P.boons.malice ? 1.3 : 1;
@@ -1320,13 +1320,17 @@ function dmgEnemy(e, amount, type, o) {
   }
   if (e.curse > 0) d *= 1.35;
   if (e.mark > 0) d *= 1.5;
-  if (P.c.overload && (e.stun > 0 || e.chill > 0 || e.freeze > 0)) d *= 1 + P.c.overload; // Stormcaller
+  if (P.c.overload && (e.stun > 0 || e.chill > 0 || e.freeze > 0)) d *= 1 + P.c.overload * P.cp; // Stormcaller
   if (P.boons.exec && e.hp < e.maxHp * 0.3) d *= 1.4;
   if (P.boons.slayer && (e.boss || e.elite)) d *= 1.25;
+  if (P.c.kindle && type === 'fire') { // Warlock: Kindling Hex
+    if (e.kindle > 0) d *= 1 + P.c.kindle * P.cp * e.kindle;
+    if (!o.dot && e.curse > 0) e.curse = Math.max(e.curse, 8);
+  }
   if (o.vsPoison && (e.poison || e.venom)) d *= o.vsPoison;
   const vn = P.c.venom;
   if (vn && !o.dot && TYPES[type]) {
-    if (TYPES[type].kind === 'spell' && e.venom) d *= 1 + vn.spell * e.venom.n;                     // Nightblade: spells feed on venom
+    if (TYPES[type].kind === 'spell' && e.venom) d *= 1 + vn.spell * P.cp * e.venom.n;                     // Nightblade: spells feed on venom
     else if (TYPES[type].kind === 'skill' && !o.proc) { e.venom = { n: Math.min(vn.max, (e.venom ? e.venom.n : 0) + 1), t: vn.dur }; } // attacks and skills stack it
   }
   e.hp -= d; e.flash = 0.1; if (!e.awake) wake(e);
@@ -1334,7 +1338,7 @@ function dmgEnemy(e, amount, type, o) {
   if (!o.dot) {
     if (P.leech > 0) heal(d * P.leech, true);
     if (crit && P.c.shatter && e.chill > 0 && G.time >= (e.shT || 0)) { // Warden: at most once every 3s per enemy
-      e.shT = G.time + 3; e.freeze = Math.max(e.freeze, P.c.shatter * (e.boss ? 0.3 : e.elite ? 0.7 : 1)); burst(e.x, e.y, TYPES.frost.color, 8, 90); sfx('ice');
+      e.shT = G.time + 3; e.freeze = Math.max(e.freeze, Math.min(2.5, P.c.shatter * P.cp) * (e.boss ? 0.3 : e.elite ? 0.7 : 1)); burst(e.x, e.y, TYPES.frost.color, 8, 90); sfx('ice');
     }
     applySt(e, o, d);
     if (P.buff.envenom > 0 && !o.proc && TYPES[type] && TYPES[type].kind === 'skill') applySt(e, { poison: 0.35 }, d);
@@ -1742,8 +1746,19 @@ function killEnemy(e, o) {
   gainXp(e.xp);
   if (!o.self) dropLoot(e);
   if (P.leg.blood) heal(P.maxHp * 0.02, true);
-  if (P.c.killHeal) heal(P.maxHp * P.c.killHeal, true);                                                             // Berserker
-  if (P.c.harvest && (e.burn || e.wither || e.curse > 0)) P.mana = Math.min(P.maxMana, P.mana + P.maxMana * P.c.harvest); // Warlock
+  if (P.c.killHeal) heal(P.maxHp * P.c.killHeal * P.cp, true);                                                             // Berserker
+  if (P.c.doom && (e.curse > 0 || e.burn)) { // Warlock: Spreading Doom
+    const x = e.x, y = e.y, cursed = e.curse > 0, bdps = e.burn ? e.burn.dps : 0, dmg = P.sp * P.c.doom * P.cp, col = TYPES.fire.color;
+    after(0.06, () => {
+      ringFx(x, y, 96, col, 0.4, true); burst(x, y, '#cf62e6', 10, 160); burst(x, y, col, 14, 180); sfx('boom');
+      for (const q of G.enemies) {
+        if (q.dead || Math.hypot(q.x - x, q.y - y) > 96 + q.r) continue;
+        if (cursed) q.curse = Math.max(q.curse, 6);
+        if (bdps && (!q.burn || q.burn.dps < bdps)) q.burn = { dps: bdps, t: 3 };
+        dmgEnemy(q, dmg, 'fire', { proc: 1 }); if (!q.dead && !q.awake) wake(q);
+      }
+    });
+  }
   if (P.leg.pyre && !o.pyre) { const x = e.x, y = e.y; after(0.08, () => nova(x, y, 62, Math.max(P.atk, P.sp) * 1.2, 'fire', { proc: 1, pyre: 1, burn: 0.3 })); }
   if (e.mods) {
     if (e.mods.includes('volatile')) tele(e.x, e.y, 88, 0.85, e.dmg * 1.4, { color: '#ff6a3d' });
@@ -1774,10 +1789,11 @@ function updEnemies(dt) {
         e.dotT -= 0.5;
         if (e.burn) { dmgEnemy(e, e.burn.dps * 0.5, 'fire', { dot: 1, raw: 1, col: '#ff9a4d' }); if (e.dead) continue; e.burn.t -= 0.5; if (e.burn.t <= 0) e.burn = null; }
         if (e.poison) { dmgEnemy(e, e.poison.dps * 0.5, 'guile', { dot: 1, raw: 1, col: '#7fe6b0' }); if (e.dead) continue; e.poison.t -= 0.5; if (e.poison.t <= 0) e.poison = null; }
-        if (e.venom) { dmgEnemy(e, e.venom.n * P.atk * P.c.venom.dps * 0.5 * (P.boons.malice ? 1.5 : 1), 'guile', { dot: 1, raw: 1, col: '#5fe0a0' }); if (e.dead) continue; e.venom.t -= 0.5; if (e.venom.t <= 0) e.venom = null; }
+        if (e.venom) { dmgEnemy(e, e.venom.n * P.atk * P.c.venom.dps * P.cp * 0.5 * (P.boons.malice ? 1.5 : 1), 'guile', { dot: 1, raw: 1, col: '#5fe0a0' }); if (e.dead) continue; e.venom.t -= 0.5; if (e.venom.t <= 0) e.venom = null; }
         if (e.wither) { dmgEnemy(e, e.wither.dps * 0.5, 'shadow', { dot: 1, raw: 1, col: '#c9a8ff' }); if (e.dead) continue; e.wither.t -= 0.5; if (e.wither.t <= 0) e.wither = null; }
       }
     }
+    if (P.c.kindle) { if (e.curse > 0 && e.burn) e.kindle = Math.min(10, (e.kindle || 0) + dt); else if (e.kindle) e.kindle = Math.max(0, e.kindle - 2 * dt); }
     if (e.mark > 0) e.mark -= dt;
     if (e.freeze > 0) { e.freeze -= dt; continue; }
     if (e.stun > 0) { e.stun -= dt; continue; }
@@ -1949,11 +1965,12 @@ function recalc() {
   let N = 0; for (const k of MAST_KEYS) { p.mast[k] = (p.mp[k] || 0) + gm[k]; N += p.mast[k]; } p.mastTotal = N;
   for (const k of TYPE_KEYS) p.tdmg[k] = td[k];
   const m = p.mast, b = p.bless, rl = p.relics, bn = p.boons || {}, lv = 1 + 0.02 * (L - 1), oldMax = p.maxHp;
+  const cp = p.cp = 1 + CALL_PCT * m.calling; // class passive strength
   p.maxHp = (c.hp + c.hpL * (L - 1) + g.hp) * (1 + 0.03 * m.vitality + 0.12 * rl.hp + (b === 'vigor' ? 0.2 : 0) + (p.leg.titan ? 0.25 : 0) + (bn.jugg ? 0.2 : 0) + 0.1 * (bn.vit || 0)) * (bn.glass ? 0.85 : 1);
   p.maxMana = (c.mana + c.manaL * (L - 1) + g.mana) * (1 + 0.03 * m.focus + 0.15 * rl.mana + (bn.battery ? 0.3 : 0));
-  p.atk = (wAtk + MP_FLAT * N) * (1 + g.atkPct + MP_PCT * N) * lv; p.sp = (wSp + g.sp + MP_FLAT * N) * (1 + g.spPct + (c.spPct || 0) + MP_PCT * N) * lv;
+  p.atk = (wAtk + MP_FLAT * N) * (1 + g.atkPct + MP_PCT * N) * lv; p.sp = (wSp + g.sp + MP_FLAT * N) * (1 + g.spPct + (c.spPct || 0) * (c.empower ? 1 : cp) + MP_PCT * N) * lv;
   p.armor = (c.armor || 0) * (1 + 0.12 * (L - 1)) + g.armor;
-  p.crit = Math.min(0.75, 0.05 + g.crit + 0.01 * m.precision + (c.crit || 0) + (wk.crit || 0) + (bn.deadeye ? 0.1 : 0));
+  p.crit = Math.min(0.75, 0.05 + g.crit + 0.01 * m.precision + (c.crit || 0) * cp + (wk.crit || 0) + (bn.deadeye ? 0.1 : 0));
   p.critDmg = 1.5 + g.critDmg + 0.03 * m.precision + (c.critDmg || 0) + (bn.deadeye ? 0.3 : 0);
   p.aspd = 1 + g.aspd + 0.015 * m.haste + (bn.quick ? 0.15 : 0);
   p.spd = c.spd * Math.min(1.7, 1 + g.mspd + 0.01 * m.haste + (p.leg.wind ? 0.18 : 0));
@@ -1961,11 +1978,11 @@ function recalc() {
   p.leech = g.leech + (p.leg.blood ? 0.04 : 0) + (bn.vamp ? 0.03 : 0);
   p.cdr = Math.min(bn.quick ? 0.6 : 0.5, g.cdr + 0.01 * m.focus + (bn.quick ? 0.15 : 0));
   p.hpRegen = p.maxHp * 0.004 + g.hpRegen;
-  p.manaRegen = (1 + p.maxMana * 0.04) * (1 + g.manaRegen + 0.03 * m.focus + (c.manaRegen || 0) + 0.15 * rl.mana + (bn.battery ? 0.3 : 0));
+  p.manaRegen = (1 + p.maxMana * 0.04) * (1 + g.manaRegen + 0.03 * m.focus + (c.manaRegen || 0) * cp + 0.15 * rl.mana + (bn.battery ? 0.3 : 0));
   p.dmgMul = (1 + 0.08 * rl.dmg) * (1 + 0.02 * m.might) * (b === 'wrath' ? 1.15 : 1) * (bn.glass ? 1.35 : 1) * (1 + 0.1 * (bn.might || 0));
-  p.drFlat = 1 - (1 - (c.dr || 0)) * (b === 'warding' ? 0.85 : 1) * (bn.jugg ? 0.9 : 1);
-  p.goldFind = g.gold + 0.04 * m.fortune + (b === 'fortune' ? 0.5 : 0) + (p.leg.midas ? 1 : 0) + (bn.treasure ? 0.4 : 0);
-  p.mf = g.mf + 0.03 * m.fortune + (b === 'fortune' ? 0.3 : 0) + (bn.treasure ? 0.3 : 0); p.xpB = g.xp + 0.02 * m.fortune + (b === 'insight' ? 0.3 : 0) + (bn.scholar ? 0.2 : 0);
+  p.drFlat = 1 - (1 - Math.min(0.4, (c.dr || 0) * cp)) * (b === 'warding' ? 0.85 : 1) * (bn.jugg ? 0.9 : 1);
+  p.goldFind = g.gold + (b === 'fortune' ? 0.5 : 0) + (p.leg.midas ? 1 : 0) + (bn.treasure ? 0.4 : 0);
+  p.mf = g.mf + (b === 'fortune' ? 0.3 : 0) + (bn.treasure ? 0.3 : 0); p.xpB = g.xp + (b === 'insight' ? 0.3 : 0) + (bn.scholar ? 0.2 : 0);
   p.potMax = 3 + rl.flask + (p.belt || 0); p.dashCdMax = 2.2 * (c.dashCd || 1) * (p.leg.wind ? 0.6 : 1);
   p.dashMax = 1 + (bn.twin ? 1 : 0); if (p.dashN > p.dashMax) p.dashN = p.dashMax;
   if (oldMax > 1 && p.maxHp > oldMax && !p.dead) p.hp += p.maxHp - oldMax;
@@ -2290,6 +2307,7 @@ function drawEnemy(c, e) {
     if (e.hp < e.maxHp) { const k = clamp(e.hp / e.maxHp, 0, 1); c.fillStyle = 'rgba(0,0,0,.6)'; c.fillRect(x - w / 2, top, w, 3.5); c.fillStyle = e.elite ? '#f2c75c' : '#e0463f'; c.fillRect(x - w / 2, top, w * k, 3.5); }
     let px = x - w / 2;
     if (e.burn) { c.fillStyle = '#ff7b2e'; c.fillRect(px, top + 4.5, 4, 2); px += 5; }
+    if (e.kindle > 0.3) { c.fillStyle = '#ff7b2e'; c.fillRect(px, top + 4.5, Math.max(2, e.kindle * 2), 2); px += e.kindle * 2 + 2; }
     if (e.venom) { c.fillStyle = '#5fe0a0'; for (let k = 0; k < e.venom.n; k++) c.fillRect(px + k * 3, top + 4.5, 2, 3); px += e.venom.n * 3 + 2; }
     if (e.poison || e.wither) { c.fillStyle = e.poison ? '#3fd6ae' : '#a877ff'; c.fillRect(px, top + 4.5, 4, 2); px += 5; }
     if (e.chill > 0) { c.fillStyle = '#6fcbff'; c.fillRect(px, top + 4.5, 4, 2); }
@@ -2589,7 +2607,8 @@ function tabMast() {
     '<p class="hint">' + N + ' point' + (N === 1 ? '' : 's') + ' so far: +' + MP_FLAT * N + ' attack and spell power, then +' + Math.round(MP_PCT * 100 * N) + '% to both.</p><div class="mlist">';
   for (const k of MAST_KEYS) {
     const t = MAST[k], gear = P.mast[k] - P.mp[k];
-    h += '<div class="mrow" style="--tc:' + t.color + '"><div class="mi">' + svg(t.icon) + '</div><div class="mt"><b>' + t.name + '</b><span>' + t.perk + ' per point</span></div>' +
+    const extra = k === 'calling' ? '<small>' + P.c.name + ': ' + P.c.calling + '. Now at ' + Math.round(P.cp * 100) + '% strength.</small>' : '';
+    h += '<div class="mrow" style="--tc:' + t.color + '"><div class="mi">' + svg(t.icon) + '</div><div class="mt"><b>' + t.name + '</b><span>' + t.perk + ' per point</span>' + extra + '</div>' +
       '<div class="mv">' + P.mast[k] + (gear ? '<small>incl. ' + gear + ' gear</small>' : '') + '</div>' +
       '<button class="btn plus" data-act="mast" data-v="' + k + '" ' + (P.pts > 0 ? '' : 'disabled') + ' aria-label="Add a point to ' + t.name + '">+</button></div>';
   }
@@ -2671,7 +2690,7 @@ function tabStats() {
   ['Life steal', (p.leech * 100).toFixed(1) + '%'], ['Cooldown recovery', pc(p.cdr)], ['Health per second', p.hpRegen.toFixed(1)], ['Mana per second', p.manaRegen.toFixed(1)],
   ['Gold found', '+' + pc(p.goldFind)], ['Magic find', '+' + pc(p.mf)], ['Bonus experience', '+' + pc(p.xpB)], ['Potion capacity', p.potMax]];
   let h = '<h3>Level ' + p.level + ' ' + p.c.name + '</h3><div class="stats">' + rows.map(r => '<div><span>' + r[0] + '</span><b>' + r[1] + '</b></div>').join('') + '</div><h3>Effects</h3>';
-  h += '<div class="note"><b>' + p.c.name + '.</b> ' + p.c.passive + '</div>';
+  h += '<div class="note"><b>' + p.c.name + '.</b> ' + p.c.passive + (p.cp > 1 ? ' <b>Calling: ' + Math.round(p.cp * 100) + '% strength.</b>' : '') + '</div>';
   if (p.bless) h += '<div class="note"><b>' + BLESS[p.bless].name + '.</b> ' + BLESS[p.bless].desc + ' until the next sanctuary.</div>';
   for (const k in p.relics) if (p.relics[k]) h += '<div class="note"><b>' + RELICS[k].name + (p.relics[k] > 1 ? ' ×' + p.relics[k] : '') + '.</b> ' + RELICS[k].desc + (p.relics[k] > 1 ? ' each' : '') + '.</div>';
   for (const k in p.leg) h += '<div class="note"><b>' + LEG[k].name + '.</b> ' + LEG[k].desc + '</div>';
@@ -2858,6 +2877,7 @@ function loadSave() {
 function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* storage is optional */ } }
 function cleanItem(it) {
   if (!it || !SLOTS.includes(it.slot) || !(it.ilvl >= 1) || !Array.isArray(it.aff) || (it.slot === 'weapon' && !WKIND[it.kind])) return null;
+  for (const a of it.aff) if (a && a.k === 'mast' && a.t === 'fortune') a.t = 'calling';
   it.aff = it.aff.filter(a => a && AFF[a.k] && (!AFF[a.k].typed || TYPES[a.t]) && (!AFF[a.k].mtyped || MAST[a.t])); if (!LEG[it.leg]) it.leg = null;
   it.rar = clamp(it.rar | 0, 0, 4); it.up = clamp(it.up | 0, 0, 10); it.name = String(it.name || itemName(it)); it.val = Math.max(1, it.val | 0);
   return it;
@@ -2869,7 +2889,7 @@ function resumeRun() {
   const q = s.p;
   P.level = Math.max(1, q.level | 0); P.xp = Math.max(0, +q.xp || 0); P.pts = Math.max(0, q.pts | 0);
   if (s.v === 1) { let spent = 0; for (const k in (q.mp || {})) spent += Math.max(0, q.mp[k] | 0); P.pts += Math.max(0, spent - 3); } // old school masteries: refund what was spent
-  else for (const k of MAST_KEYS) P.mp[k] = Math.max(0, (q.mp && q.mp[k]) | 0);
+  else { for (const k of MAST_KEYS) P.mp[k] = Math.max(0, (q.mp && q.mp[k]) | 0); P.mp.calling += Math.max(0, (q.mp && q.mp.fortune) | 0); } // Fortune became Calling
   P.ab = {}; for (const id in (q.ab || {})) if (AB[id] && P.c.schools.includes(AB[id].type)) P.ab[id] = { rank: Math.max(1, q.ab[id].rank | 0) };
   for (const id of P.c.abilities) if (!P.ab[id]) P.ab[id] = { rank: 1 };
   P.slots = [0, 1, 2, 3].map(i => (q.slots && P.ab[q.slots[i]]) ? q.slots[i] : null);
